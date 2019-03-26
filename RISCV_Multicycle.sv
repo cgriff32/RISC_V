@@ -2,7 +2,9 @@
 `include "constants.vh"
 module RISCV_Multicycle(
 
-	input clk
+	input clk,
+	
+	output [31:0] debug
 	
 );
 
@@ -10,27 +12,30 @@ wire [`XLEN-1:0]	pc_decode;
 wire [`XLEN-1:0]	instr_decode;
 
 wire [`XLEN-1:0]	pc_exe;
-wire [`XLEN-1:0] rs1_exe;
-wire [`XLEN-1:0] rs2_exe;
-wire [`XLEN-1:0] instr_exe;
+wire [`XLEN-1:0] 	rs1_exe;
+wire [`XLEN-1:0] 	rs2_exe;
+wire [`XLEN-1:0] 	instr_exe;
 
+wire [`XLEN-1:0]  alu_exe;
 wire [`XLEN-1:0]	pc_mem;
 wire [`XLEN-1:0]	alu_mem;
 wire [`XLEN-1:0]	rs2_mem;
-wire [`XLEN-1:0] instr_mem;
+wire [`XLEN-1:0]	instr_mem;
 
-wire [`XLEN-1:0] mem_wb;
-wire [`XLEN-1:0] instr_wb;
+wire [`XLEN-1:0]	mem_wb;
+wire [`XLEN-1:0]	instr_wb;
 
-wire 				reg_write_en; 
-wire 				br_unsign; 
-wire 				b_sel; 
-wire 				a_sel; 
-wire 				alu_sel; 
-wire 				mem_write_en;
-wire [1:0] 		pc_sel;
-wire [1:0] 		wb_sel;
-wire [2:0] 		imm_sel;
+wire				br_true;
+
+wire 								reg_write_en; 
+wire 								br_unsign; 
+wire [`B_SEL_WIDTH-1:0]		b_sel; 
+wire [`A_SEL_WIDTH-1:0]		a_sel; 
+wire [`ALU_OP_WIDTH-1:0]	alu_sel; 
+wire [`MEMRW_SEL_WIDTH-1:0] mem_write_en;
+wire [`PC_SEL_WIDTH-1:0]	pc_sel;
+wire [`WB_SEL_WIDTH-1:0] 	wb_sel;
+wire [`IMM_SEL_WIDTH-1:0]	imm_sel;
 
 control control(	instr_decode,
 						br_true,
@@ -71,11 +76,12 @@ execute execute(	clk,
 						alu_mem,
 						rs2_mem,
 						instr_mem,
+						alu_exe,
 						imm_sel,
 						br_unsign,
 						a_sel,
 						b_sel,
-						alu_op,
+						alu_sel,
 						br_true,
 						alu_mem,
 						mem_wb);
@@ -90,5 +96,5 @@ mem mem(				clk,
 						instr_wb,
 						mem_write_en,
 						wb_sel);
-
+		
 endmodule

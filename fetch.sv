@@ -19,7 +19,6 @@ input [`PC_SEL_WIDTH-1:0]			pc_sel
 );
 
 reg [`REG_DATA_WIDTH-1:0] 	pc;
-wire [`REG_DATA_WIDTH-1:0]	w_pc;
 wire [`REG_DATA_WIDTH-1:0]	instr;
 
 imem imem(pc, 
@@ -40,14 +39,12 @@ begin
 	instr_decode <= instr;	//instr to decode stage
 
 	case(pc_sel)
-		`PC_SEL_PLUS_FOUR : pc <= w_pc + `XLEN'd4;  	// PC+4
+		`PC_SEL_PLUS_FOUR : pc <= pc + `XLEN'd4;  	// PC+4
 		`PC_SEL_BRANCH 	: pc <= alu_exe;    			// Take branch
-		default 				: pc <= w_pc;					//Stall
+		default 				: pc <= pc;					//Stall
 	endcase
 
 end
-
-assign w_pc = pc;
 
 
 endmodule

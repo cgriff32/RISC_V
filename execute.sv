@@ -17,6 +17,9 @@ output reg [`REG_DATA_WIDTH-1:0] alu_mem,
 output reg [`REG_DATA_WIDTH-1:0] rs2_mem,
 output reg [`REG_DATA_WIDTH-1:0] instr_mem,
 
+//Output wire
+output [`XLEN-1:0] 					alu_exe,
+
 //Control signals
 input [`IMM_SEL_WIDTH-1:0] 		imm_sel,
 input 									br_unsign,
@@ -66,6 +69,7 @@ begin
 	endcase
 	
 	br_true = alu_out[0];
+	alu_exe[`XLEN-1:0] = alu_out[`XLEN-1:0];
 	
 end
 

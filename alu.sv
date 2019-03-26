@@ -30,7 +30,7 @@ begin
         `ALU_OP_SGE  : out = {31'b0, $signed(a) >= $signed(b)};	//Set greater than or equal
         `ALU_OP_SLTU : out = {31'b0, a < b};
         `ALU_OP_SGEU : out = {31'b0, a >= b};
-		  default 	   : out = '0;
+		  default 	   : out = 32'b0;
 	endcase
 end
 
