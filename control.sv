@@ -5,8 +5,7 @@
 module control(
 
 input [`INSTR_WIDTH-1:0]		instr_decode,
-input 								br_eq, 
-input 								br_lt,
+input 								br_true,
 
 output 								reg_write_en, 
 output 								br_unsign, 
@@ -17,12 +16,11 @@ output 								mem_write_en,
 output [`PC_SEL_WIDTH-1:0]		pc_sel,
 output [`WB_SEL_WIDTH-1:0] 	wb_sel,
 output [`IMM_SEL_WIDTH-1:0]	imm_sel
-
 );
 
-wire[6:0] opcode = instr_decode[6:0];
-wire	 	 funct7 = instr_decode[30];
-wire[2:0] funct3 = instr_decode[14:12];
+wire[`OP_CODE_WIDTH-1:0]	opcode = instr_decode[6:0];
+wire	 	 						funct7 = instr_decode[30];
+wire[2:0] 						funct3 = instr_decode[14:12];
 
 
 

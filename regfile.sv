@@ -5,18 +5,17 @@ module regfile(
 input clk,
 
 input [`REG_ADDR_WIDTH-1:0]	rd_addr,
-input [`REG_DATA_WIDTH-1:0]	rd_data,
+input [`XLEN-1:0]	rd_data,
 
 input [`REG_ADDR_WIDTH-1:0]	r1_addr, 
 input [`REG_ADDR_WIDTH-1:0]	r2_addr,
-output [`REG_DATA_WIDTH-1:0] 	r1_data, 
-output [`REG_DATA_WIDTH-1:0]	r2_data,
+output [`XLEN-1:0] 				r1_data, 
+output [`XLEN-1:0]				r2_data,
 
-input write_en
-
+input 								write_en
 );
 
-reg [`REG_DATA_WIDTH-1:0] reg_file [`REG_DATA_WIDTH-1:0];
+reg [`XLEN-1:0] reg_file [`REG_FILE_SIZE-1:0];
 wire enable_local;
 
 
@@ -32,7 +31,7 @@ begin
 		reg_file[i] <= '0;
 end
 
-always @(posedge clk)
+always_ff @(posedge clk)
 begin
 	if(enable_local) //Write to regfile
 	begin

@@ -2,16 +2,15 @@
 
 module alu(
 
-input [`REG_DATA_WIDTH-1:0]	a,
-input [`REG_DATA_WIDTH-1:0] 	b,
+input [`XLEN-1:0]				a,
+input [`XLEN-1:0] 			b,
 
-input [`ALU_OP_WIDTH-1:0] 		alu_op,
+input [`ALU_OP_WIDTH-1:0]	alu_op,
 
-output [`REG_DATA_WIDTH-1:0] 	out
-
+output [`XLEN-1:0] 			out
 );
 
-wire [5:0] shamt = b[5:0];
+wire [`SHAMT_WIDTH-1:0] shamt = b[5:0];
 
 always @(*)
 begin

@@ -4,27 +4,26 @@ module mem(
 
 input clk,
 
-//Previous stage registers
-input [`REG_DATA_WIDTH-1:0]		pc_mem, 
-input [`REG_DATA_WIDTH-1:0]		instr_mem,
-input [`REG_DATA_WIDTH-1:0]		alu_mem,
-input [`REG_DATA_WIDTH-1:0] 		rs2_mem,
+//Input signals
+input [`XLEN-1:0]						pc_mem, 
+input [`XLEN-1:0]						instr_mem,
+input [`XLEN-1:0]						alu_mem,
+input [`XLEN-1:0] 					rs2_mem,
 
 //Next stage registers
 output reg [`REG_DATA_WIDTH-1:0]	mem_wb,
 output reg [`REG_DATA_WIDTH-1:0] instr_wb,
 
 //Control signals
-input					write_en,
+input										write_en,
 input[`WB_SEL_WIDTH-1:0] 			wb_sel
-
 );
 
-wire[`REG_DATA_WIDTH-1:0] 			mem_data;
+wire[`XLEN-1:0] 			mem_data;
 
-dmem dmem(clk, write_en, alu_mem, rs2_mem, mem_data);
+dmem dmem(clk, alu_mem, rs2_mem, mem_data, write_en);
 
-always @(posedge clk)
+always_ff @(posedge clk)
 begin
 
 	instr_wb <= instr_mem;
