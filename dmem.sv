@@ -1,4 +1,4 @@
-//
+//TODO: Add mem_wr and mem_en control signals
 `include "constants.vh"
 module dmem(
 
@@ -9,7 +9,8 @@ input [`XLEN-1:0] 	mem_write_data,
 
 output [`XLEN-1:0]	mem_read_data,
 
-input write_en
+input write_en,
+input mem_en
 );
 
 reg [`XLEN-1:0] datamem [0:2047];
