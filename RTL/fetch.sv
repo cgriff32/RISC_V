@@ -1,23 +1,25 @@
-//TODO: Move imem to core
+//TODO:
 `include "constants.vh"
 
 module fetch(
 
 input clk,
 
-//Input signals
+//IF/ID registers
+output reg [`REG_DATA_WIDTH-1:0]	pc_decode,
+output reg [`REG_DATA_WIDTH-1:0]	instr_decode,
+
+//Instruction memory signals
+output [`XLEN-1:0]					pc_imem,
+input [`XLEN-1:0]						instr_imem,
+
+//Control signals
+input [`PC_SEL_WIDTH-1:0]			pc_sel,
 input [`XLEN-1:0]						br_decode,
 input [`XLEN-1:0]						jal_decode,
 input [`XLEN-1:0]						jalr_decode,
 
-
-//Next stage registers
-output reg [`REG_DATA_WIDTH-1:0]	pc_decode,
-output reg [`REG_DATA_WIDTH-1:0]	instr_decode,
-
-//Control signals
-input [`PC_SEL_WIDTH-1:0]			pc_sel,
-
+//Hazard control
 input										stall_if,
 input										flush_if
 );
@@ -30,11 +32,10 @@ wire [`XLEN-1:0]				pc_wire;
 reg base;
 wire offset;
 
-imem imem(pc, 
-			 instr);
-
 always_comb
 begin
+
+pc_imem = pc;
 	
 	case(pc_sel)
 		`PC_SEL_BRANCH 	: begin
@@ -56,24 +57,24 @@ end
 always_comb
 begin
 
-	if(flush_if)
-	begin
-		pc_decode 		= pc;
-		instr_decode 	= '0;
-	end
-	else
-	begin
-		pc_decode 		= pc;		//pc to decode stage
-		instr_decode	= instr;	//instr to decode stage
-	end
-	
+
 end
 
 always_ff @(posedge clk)
 begin
 
+	if(flush_if)
+	begin
+		pc_decode 		<= pc;
+		instr_decode	<= '0;
+	end
+	
 	if(!stall_if)
-		pc <= pc_wire;
+	begin
+		pc_decode	 <= pc;		//pc to decode stage
+		pc 			 <= pc_wire;
+		instr_decode <= instr_imem;	//instr to decode stage
+	end
 	
 end
 

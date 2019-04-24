@@ -100,6 +100,13 @@
 `define B_SEL_MEM		`B_SEL_WIDTH'd4
 `define B_SEL_ZERO	`B_SEL_WIDTH'd5
 
+//forward_sel
+`define FORWARD_SEL_WIDTH	2
+`define FORWARD_SEL_EXE	`B_SEL_WIDTH'd0
+`define FORWARD_SEL_MEM	`B_SEL_WIDTH'd1
+`define FORWARD_SEL_WB	`B_SEL_WIDTH'd2
+
+
 //memrw_sel
 
 `define MEMRW_SEL_WIDTH	1
@@ -109,7 +116,6 @@
 //wb_sel
 
 `define WB_SEL_WIDTH 2
-`define WB_SEL_PC		`WB_SEL_WIDTH'd0
-`define WB_SEL_ALU	`WB_SEL_WIDTH'd1
-`define WB_SEL_MEM	`WB_SEL_WIDTH'd2
+`define WB_SEL_ALU	`WB_SEL_WIDTH'd0
+`define WB_SEL_MEM	`WB_SEL_WIDTH'd1
 
