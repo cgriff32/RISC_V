@@ -7,7 +7,7 @@ input [`XLEN-1:0] 			b,
 
 input [`ALU_OP_WIDTH-1:0]	alu_op,
 
-output [`XLEN-1:0] 			out
+output logic [`XLEN-1:0] 			out
 );
 
 wire [`SHAMT_WIDTH-1:0] shamt = b[`SHAMT_WIDTH-1:0];

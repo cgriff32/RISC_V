@@ -14,11 +14,11 @@ input 									br_true,
 
 //Control outputs
 //To Fetch
-output [`PC_SEL_WIDTH-1:0]			pc_sel,
+output logic [`PC_SEL_WIDTH-1:0]			pc_sel,
 
 //To Decode
-output [`IMM_SEL_WIDTH-1:0]		imm_sel,
-output [`ALU_OP_WIDTH-1:0]			br_op,
+output logic [`IMM_SEL_WIDTH-1:0]		imm_sel,
+output logic [`ALU_OP_WIDTH-1:0]			br_op,
 
 //ID/EX registers
 output reg [`B_SEL_WIDTH-1:0]		b_sel_exe, 
@@ -46,12 +46,12 @@ input [`REG_ADDR_WIDTH-1:0]		rd_addr_mem,
 input [`REG_ADDR_WIDTH-1:0]		rd_addr_wb,
 
 //Hazard control (Decode)
-output 									flush_if,
-output									stall_if,
+output logic									flush_if,
+output	logic								stall_if,
 
 //Forwarding control (Execute)
-output [`FORWARD_SEL_WIDTH-1:0]	forward_a_sel,
-output [`FORWARD_SEL_WIDTH-1:0]	forward_b_sel
+output logic [`FORWARD_SEL_WIDTH-1:0]	forward_a_sel,
+output logic [`FORWARD_SEL_WIDTH-1:0]	forward_b_sel
 
 );
 
@@ -62,24 +62,24 @@ wire[2:0] 						funct3 = instr_decode[14:12];
 wire[`REG_ADDR_WIDTH-1:0]	rs1_addr_decode = instr_decode[19:15];
 wire[`REG_ADDR_WIDTH-1:0]	rs2_addr_decode = instr_decode[24:20];
 
-wire								illegal_instr;
-wire [`ALU_OP_WIDTH-1:0]	alu_sel_op;
+logic								illegal_instr;
+logic [`ALU_OP_WIDTH-1:0]	alu_sel_op;
 
 //Decode control signals
-wire								br_taken;
-wire								jalr_taken;
-wire								jal_taken;
+logic								br_taken;
+logic								jalr_taken;
+logic								jal_taken;
 
-wire								detect_hazard;
+logic								detect_hazard;
 
 //Pipeline register wires
-wire [`B_SEL_WIDTH-1:0]		b_sel_wire; 
-wire [`A_SEL_WIDTH-1:0]		a_sel_wire;
-wire [`ALU_OP_WIDTH-1:0]	alu_sel_wire;
-wire								mem_wr_wire;
-wire 								mem_en_wire;
-wire [`WB_SEL_WIDTH-1:0] 	wb_sel_wire;
-wire								reg_en_wire;
+logic [`B_SEL_WIDTH-1:0]		b_sel_wire; 
+logic [`A_SEL_WIDTH-1:0]		a_sel_wire;
+logic [`ALU_OP_WIDTH-1:0]	alu_sel_wire;
+logic								mem_wr_wire;
+logic 								mem_en_wire;
+logic [`WB_SEL_WIDTH-1:0] 	wb_sel_wire;
+logic								reg_en_wire;
 
 //Pass signals along pipeline with instruction
 //Execute registers

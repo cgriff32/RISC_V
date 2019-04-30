@@ -46,10 +46,10 @@ wire [`REG_ADDR_WIDTH-1:0]	rd_addr = instr_wb[11:7];
 wire [`XLEN-1:0]				rs1_data;
 wire [`XLEN-1:0]				rs2_data;
 wire [`XLEN-1:0]				rd_data = mem_wb; 
-wire [`XLEN-1:0]				imm_wire;
+logic [`XLEN-1:0]				imm_wire;
 
-wire [`XLEN-1:0]				br_a;
-wire [`XLEN-1:0]				br_b;
+logic [`XLEN-1:0]				br_a;
+logic [`XLEN-1:0]				br_b;
 
 wire [`XLEN-1:0] 				imm_jal 	= {{12{instr_decode[31]}}, instr_decode[19:12], instr_decode[20], instr_decode[30:21], 1'b0 };
 wire [`XLEN-1:0] 				imm_jalr	= {{21{instr_decode[31]}}, instr_decode[30:21], 1'b0 };

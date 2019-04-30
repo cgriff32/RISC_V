@@ -32,9 +32,9 @@ input [`XLEN-1:0]						forward_mem,
 input [`XLEN-1:0]						forward_wb
 );
 
-wire [`XLEN-1:0] alu_a;
-wire [`XLEN-1:0] alu_b;
-wire [`XLEN-1:0] alu_out;
+logic [`XLEN-1:0] alu_a;
+logic [`XLEN-1:0] alu_b;
+logic [`XLEN-1:0] alu_out;
 
 	alu alu(alu_a, alu_b, alu_op, alu_out);
 

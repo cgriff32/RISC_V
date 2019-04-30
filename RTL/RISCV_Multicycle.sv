@@ -1,6 +1,4 @@
 //TODO:
-//Control path
-//Pipeline flush
 //Branch Prediction
 
 
@@ -248,11 +246,14 @@ dmem dmem(			.clk(clk),
 						);
 						
 wb wb(				.clk(clk),
-						.alu_wb(alu_wb),
-						.mem_wb(mem_wb),
-						.reg_wb(reg_wb),
-						.wb_sel(wb_sel_wb)
-						);
+          //Data pipeline
+          //From MEM/WB
+					.alu_wb(alu_wb),
+					.mem_wb(mem_wb),
+					.reg_wb(reg_wb),
+					//Control signals
+					.wb_sel(wb_sel_wb)
+					);
 						
 initial 
 begin

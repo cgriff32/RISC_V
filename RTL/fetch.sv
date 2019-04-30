@@ -1,4 +1,6 @@
 //TODO:
+
+
 `include "constants.vh"
 
 module fetch(
@@ -24,18 +26,19 @@ input										stall_if,
 input										flush_if
 );
 
-reg [`REG_DATA_WIDTH-1:0] 	pc;
+reg [`REG_DATA_WIDTH-1:0] 	pc = `XLEN'b0;
 wire [`REG_DATA_WIDTH-1:0]	instr;
-wire [`XLEN-1:0]				pc_wire;
+logic [`XLEN-1:0]				pc_wire;
 
 
 reg base;
 wire offset;
 
+
+assign pc_imem = pc;
+
 always_comb
 begin
-
-pc_imem = pc;
 	
 	case(pc_sel)
 		`PC_SEL_BRANCH 	: begin
@@ -52,12 +55,6 @@ pc_imem = pc;
 		end
 	endcase
 	
-end
-
-always_comb
-begin
-
-
 end
 
 always_ff @(posedge clk)

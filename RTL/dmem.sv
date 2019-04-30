@@ -17,10 +17,10 @@ reg [`XLEN-1:0] datamem [0:2047];
 
 always_ff @(posedge clk)
 begin
-	if(write_en)
+	if(write_en && mem_en)
 		datamem[mem_addr] <= mem_write_data;
 end
 
-assign mem_read_data = (write_en == 1'b0) ? datamem[mem_addr]: 32'b0;
+assign mem_read_data = (!write_en && mem_en) ? datamem[mem_addr] : 32'b0;
 
 endmodule
