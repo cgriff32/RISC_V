@@ -68,27 +68,49 @@ decode DUT(		.clk(clk),
 						);
 initial
 begin
+  #5
   
   pc_decode <= '0;
-  instr_decode <= 32'b01010101010101010101010101010101;
-  mem_wb <= '0;
+  instr_decode <= '0;
   instr_wb <= '0;
+  //RS1 ADDR
+  instr_decode[19:15] <= 5'b00001;
+  //RS2 ADDR
+  instr_decode[24:20] <= 5'b00000;
+  //RD ADDR
+  instr_wb[11:7] <= 5'b00001;
+  br_op <= '0;
+  mem_wb <= '1;
+  
   imm_sel <= `IMM_SEL_I;
   reg_write_en <= '0;
-  br_op <= '0;
+  #10
+  reg_write_en <= '1;
+  #10
+  reg_write_en <= '0;
   
-  #5;
+  br_op = `ALU_OP_SEQ;
+    #10;
+	br_op = `ALU_OP_SNE;
+	  #10;
+	br_op = `ALU_OP_SLT;
+	  #10;
+	br_op = `ALU_OP_SLTU;
+  #10;
+	br_op = `ALU_OP_SGE;
+	#10;
+	br_op = `ALU_OP_SGEU;
+  #10;
+  
   
   reg_write_en <= '1;
-  instr_wb [11:7] <= 5'b01010;
-  mem_wb <= '1;
-  imm_sel <= `IMM_SEL_S;
   #10;
-  imm_sel <= `IMM_SEL_B;
+  reg_write_en <= '0;
   #10;
-  imm_sel <= `IMM_SEL_J;
-   #10;
-  imm_sel <= `IMM_SEL_U;
+    #10;
+    
+  
+  
   
 end
 

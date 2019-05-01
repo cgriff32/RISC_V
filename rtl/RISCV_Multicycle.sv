@@ -7,7 +7,7 @@ module RISCV_Multicycle(
 
 	input 			clk,
 	
-	output [31:0] 	debug
+	output logic [31:0] 	debug
 	
 );
 //Pipeline registers
@@ -209,6 +209,8 @@ execute execute(	.clk(clk),
 						//Forwarding control
 						.rd_addr_exe(rd_addr_exe),
 						.rd_addr_mem(rd_addr_mem),
+						.forward_a_sel(forward_a_sel),
+						.forward_b_sel(forward_b_sel),
 						.forward_mem(alu_mem),
 						.forward_wb(reg_wb)
 						);

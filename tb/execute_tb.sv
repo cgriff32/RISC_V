@@ -58,25 +58,35 @@ execute DUT(	.clk(clk),
 
 initial
 begin
-  
-  pc_exe <= '0;
-  rs1_exe <= '0;
-  rs2_exe <= '0;
+    #5;
+  pc_exe <= 32'd1;
+  rs1_exe <= 32'd2;
+  rs2_exe <= 32'd3;
   instr_exe <= '0;
-  imm_exe <= '0;
-  a_sel <= '0;
-  b_sel <= '0;
-  alu_op <= '0;
-  rd_addr_exe <= '0;
-  forward_mem <= '0;
-  forward_wb <= '0;
+  imm_exe <= 32'd4;
+  a_sel <= `A_SEL_ZERO;
+  b_sel <= `B_SEL_ZERO;
+  alu_op <= `ALU_OP_ADD;
+  rd_addr_exe <= 32'd5;
+  forward_mem <= 32'd6;
+  forward_wb <= 32'd7;
+    #10;
   
-  #5;
-  
+  b_sel <= `B_SEL_FOUR;
+  #10;
+    b_sel <= `B_SEL_MEM;
+  #10;
+    b_sel <= `B_SEL_FOUR;
+  #10;
+    b_sel <= `B_SEL_ALU;
+  #10;
+    b_sel <= `B_SEL_MEM;
+  #10;
+    b_sel <= `B_SEL_ZERO;
+  #10;
   
 end
-
-		
+  
   always 
   begin
     

@@ -26,7 +26,7 @@
 
 // ALU FUNCT3 encodings
 
-`define FUNCT3_ADD_SUB	0
+`define FUNCT3_ADD_SUB	 0
 `define FUNCT3_SLL     	1
 `define FUNCT3_SLT     	2
 `define FUNCT3_SLTU    	3
@@ -36,8 +36,9 @@
 `define FUNCT3_AND     	7
 
 // Branch FUNCT3 encodings
+`define BRANCH_OP_WIDTH 3
 
-`define FUNCT3_BEQ	0
+`define FUNCT3_BEQ	 0
 `define FUNCT3_BNE  	1
 `define FUNCT3_BLT  	4
 `define FUNCT3_BGE  	5
@@ -115,7 +116,7 @@
 
 //wb_sel
 
-`define WB_SEL_WIDTH 2
+`define WB_SEL_WIDTH 1
 `define WB_SEL_ALU	`WB_SEL_WIDTH'd0
 `define WB_SEL_MEM	`WB_SEL_WIDTH'd1
 

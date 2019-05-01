@@ -18,8 +18,8 @@ begin
         `ALU_OP_SEQ  : out = {a == b};
         `ALU_OP_SNE  : out = {a != b};
         `ALU_OP_SLT  : out = {$signed(a) < $signed(b)};	//Set less than
-        `ALU_OP_SGE  : out = {$signed(a) >= $signed(b)};	//Set greater than or equal
         `ALU_OP_SLTU : out = {a < b};
+        `ALU_OP_SGE  : out = {$signed(a) >= $signed(b)};	//Set greater than or equal
         `ALU_OP_SGEU : out = {a >= b};
 		  default 	   : out = 1'b0;
 	endcase

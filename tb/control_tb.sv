@@ -95,21 +95,31 @@ control DUT(	.clk(clk),
 initial
 begin
   
+   #5;
   instr_decode <= '0;
-  br_true <= '0;
-  rs1_addr_exe <= '0;
-  rs2_addr_exe <= '0;
-  rd_addr_exe <= '0;
-  rd_addr_mem <= '0;
-  rd_addr_wb <= '0;
+  br_true <= '1;
+  rs1_addr_exe <= 5'd3;
+  rs2_addr_exe <= 5'd4;
+  rd_addr_exe <= 5'd1;
+  rd_addr_mem <= 5'd5;
+  rd_addr_wb <= 5'd6;
   
-  #5;
-  
+ 
+  //OPCODE
+  instr_decode[6:0] <= 7'b0100011;
+  //RS1 ADDR
+  instr_decode[19:15] <= 5'd3;
+  //RS2 ADDR
+  instr_decode[24:20] <= 5'd2;
+  //FUNCT3
+  instr_decode[14:12] <= `FUNCT3_ADD_SUB;
   #10;
-  
-  
-  
-  
+  #10;
+    //RS1 ADDR
+  instr_decode[19:15] <= 5'd1;
+  //RS2 ADDR
+  instr_decode[24:20] <= 5'd2;
+
 end
 
 		

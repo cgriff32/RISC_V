@@ -28,16 +28,15 @@ wb DUT(				.clk(clk),
 
 initial
 begin
-  
+  #5;
   alu_wb <= '0;
-  mem_wb <= '0;
+  mem_wb <= '1;
   wb_sel <= '0;
   
-  #5;
-  
-  alu_wb <= '1;
   #10;
-  
+  wb_sel <= '1;
+  #10;
+  wb_sel <= '0;
   
   
   

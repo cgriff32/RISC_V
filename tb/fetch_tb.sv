@@ -43,20 +43,23 @@ imem imem(			.pc(pc_imem),
 						);
 initial
 begin
+  #5
   
   pc_sel <= `PC_SEL_FOUR;
-  br_decode <= 0;
-  jal_decode <= 0;
-  jalr_decode <= 0;
+  br_decode <= 32'd4;
+  jal_decode <= 32'd16;
+  jalr_decode <= 32'd64;
   stall_if <= 0;
   flush_if <= 0;
   
-  #5;
-  
+  #10;
+
   
   #10;
   #10;
-  
+  stall_if <= 1;
+  #10;
+  stall_if <= 0;
   
   
 end

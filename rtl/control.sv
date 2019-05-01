@@ -94,49 +94,47 @@ reg								reg_en_mem;
 
 always_comb
 begin
-
 	//Initial values, unchanged will cause a stall
 	imm_sel 			= `IMM_SEL_I;
-	b_sel_wire		= `B_SEL_IMM;
 	a_sel_wire		= `A_SEL_RS1;
+	b_sel_wire		= `B_SEL_IMM;	
 	alu_sel_wire		= `ALU_OP_ADD;
 	br_taken			= '0;
 	br_op 			= `ALU_OP_SEQ;
 	jal_taken		= '0;
 	jalr_taken		= '0;
-	mem_wr_wire		= '0;
+	mem_wr_wire		= `MEMRW_SEL_WRITE;
 	mem_en_wire		= '0;
 	wb_sel_wire		= `WB_SEL_ALU;
 	reg_en_wire		= '0;
 	illegal_instr	= '0;
-
 	
 	case(opcode)	
 	`OP_LUI : begin
+	  imm_sel 		= `IMM_SEL_U;
 		a_sel_wire	= `A_SEL_ZERO;
-		imm_sel 		= `IMM_SEL_U;
 		reg_en_wire	= 1'b1;
 	end
 	
 	`OP_AUIPC : begin
 		a_sel_wire	= `A_SEL_PC;
-		imm_sel 		= `IMM_SEL_U;
+	  imm_sel 		= `IMM_SEL_U;
 		reg_en_wire	= 1'b1;
 	end
 	
 	`OP_JAL : begin
 		a_sel_wire 	= `A_SEL_PC;
 		b_sel_wire 	= `B_SEL_FOUR;
-		reg_en_wire	= 1'b1;
 		jal_taken	= 1'b1;
+		reg_en_wire	= 1'b1;
 	end
 	
 	`OP_JALR : begin
 		illegal_instr	= (funct3 != 0);
 		a_sel_wire 		= `A_SEL_PC;
 		b_sel_wire 		= `B_SEL_FOUR;
-		reg_en_wire		= 1'b1;
 		jalr_taken		= 1'b1;
+		reg_en_wire		= 1'b1;
 	end
 	
 	`OP_BRANCH : begin
@@ -153,48 +151,61 @@ begin
 	  endcase // case (funct3)
 	end
 	
-	`OP_LOAD : begin
+	`OP_LOAD : begin		
+	  mem_wr_wire = `MEMRW_SEL_READ;
 		mem_en_wire = 1'b1;
-		mem_wr_wire = `MEMRW_SEL_READ;
 		wb_sel_wire = `WB_SEL_MEM;
 	end
 	
 	`OP_STORE : begin
 		imm_sel 		= `IMM_SEL_S;
-		mem_en_wire	= 1'b1;
 		mem_wr_wire	= `MEMRW_SEL_WRITE;
+	  mem_en_wire	= 1'b1;
 	end
 	
 	`OP_IMM : begin
+		alu_sel_wire	= (alu_sel_op == `ALU_OP_SUB ? `ALU_OP_ADD : alu_sel_op);
 		reg_en_wire 	= 1'b1;
-		alu_sel_wire	= alu_sel_op;
 	end
 	
 	`OP_R : begin
-		b_sel_wire 	= `B_SEL_RS2;
-		reg_en_wire	= 1'b1;
+		b_sel_wire 	= `B_SEL_RS2;		
 		alu_sel_wire	= alu_sel_op;
+		reg_en_wire	= 1'b1;
+
 	end
 	
 	default : illegal_instr = 1'b1; //stall
+	endcase		
+end
+
+always_comb
+begin	
+	case(funct3)
+		`FUNCT3_ADD_SUB 	: alu_sel_op = (funct7) ? `ALU_OP_SUB : `ALU_OP_ADD;
+		`FUNCT3_SLL			: alu_sel_op = `ALU_OP_SLL;
+		`FUNCT3_SLT			: alu_sel_op = `ALU_OP_SLT;
+		`FUNCT3_SLTU		: alu_sel_op = `ALU_OP_SLTU;
+		`FUNCT3_XOR			: alu_sel_op = `ALU_OP_XOR;
+		`FUNCT3_SRA_SRL	: alu_sel_op = (funct7) ? `ALU_OP_SRA : `ALU_OP_SRL;
+		`FUNCT3_OR			: alu_sel_op = `ALU_OP_OR;
+		`FUNCT3_AND			: alu_sel_op = `ALU_OP_AND;
+		default				: alu_sel_op = `ALU_OP_ADD;
 	endcase
-		
 end
 
 //Forward and Hazard detection
 always_comb
 begin
-
-
 //Forward control
 	if ((reg_en_mem) && 
-		(!rd_addr_mem) && 
+		(rd_addr_mem != 0) && 
 		(rd_addr_mem == rs1_addr_exe))
 		
 			forward_a_sel = `FORWARD_SEL_MEM;
 	else if ((reg_en_wb) &&
-		(!rd_addr_wb) &&
-		(!(reg_en_mem && !rd_addr_mem && (rd_addr_mem == rs1_addr_exe))) &&
+		(rd_addr_wb != 0) &&
+		(!(reg_en_mem && (rd_addr_mem != 0) && (rd_addr_mem == rs1_addr_exe))) &&
 		(rd_addr_wb == rs1_addr_exe))
 		
 			forward_a_sel = `FORWARD_SEL_WB;
@@ -203,13 +214,13 @@ begin
 			forward_a_sel = `FORWARD_SEL_EXE;
 		
 	if ((reg_en_mem) && 
-		(!rd_addr_mem) && 
+		(rd_addr_mem != 0) && 
 		(rd_addr_mem == rs2_addr_exe))
 		
 			forward_b_sel = `FORWARD_SEL_MEM;
 	else if ((reg_en_wb) &&
-		(!rd_addr_wb) &&
-		(!(reg_en_mem && !rd_addr_mem && (rd_addr_mem == rs1_addr_exe))) &&
+		(rd_addr_wb != 0) &&
+		(!(reg_en_mem && (rd_addr_mem != 0) && (rd_addr_mem == rs2_addr_exe))) &&
 		(rd_addr_wb == rs2_addr_exe))
 		
 			forward_b_sel = `FORWARD_SEL_WB;
@@ -253,8 +264,9 @@ begin
 	case(detect_hazard)
 	1'b1: begin
 		stall_if 		<=	1'b1;
-		b_sel_exe		<= `B_SEL_IMM;
+		
 		a_sel_exe		<= `A_SEL_RS1;
+		b_sel_exe		<= `B_SEL_IMM;
 		alu_sel_exe		<= `ALU_OP_ADD;
 		mem_wr_exe		<= '0;
 		mem_en_exe		<= '0;
@@ -263,8 +275,9 @@ begin
 	end
 	1'b0: begin
 		stall_if			<= 1'b0;
-		b_sel_exe		<= b_sel_wire;
+		
 		a_sel_exe		<= a_sel_wire;
+		b_sel_exe		<= b_sel_wire;
 		alu_sel_exe		<= alu_sel_wire;
 		mem_wr_exe		<= mem_wr_wire;
 		mem_en_exe		<= mem_en_wire;
@@ -282,23 +295,6 @@ begin
 	reg_en_mem <= reg_en_exe;
 	reg_en_wb  <= reg_en_mem;
 
-end
-
-always_comb
-begin
-	
-	case(funct3)
-		`FUNCT3_ADD_SUB 	: alu_sel_op = (funct7) ? `ALU_OP_SUB : `ALU_OP_ADD;
-		`FUNCT3_SLL			: alu_sel_op = `ALU_OP_SLL;
-		`FUNCT3_SLT			: alu_sel_op = `ALU_OP_SLT;
-		`FUNCT3_SLTU		: alu_sel_op = `ALU_OP_SLTU;
-		`FUNCT3_XOR			: alu_sel_op = `ALU_OP_XOR;
-		`FUNCT3_SRA_SRL	: alu_sel_op = (funct7) ? `ALU_OP_SRA : `ALU_OP_SRL;
-		`FUNCT3_OR			: alu_sel_op = `ALU_OP_OR;
-		`FUNCT3_AND			: alu_sel_op = `ALU_OP_AND;
-		default				: alu_sel_op = `ALU_OP_ADD;
-	endcase
-	
 end
 
 endmodule

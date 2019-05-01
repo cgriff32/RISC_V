@@ -63,10 +63,10 @@ begin
 	if(flush_if)
 	begin
 		pc_decode 		<= pc;
+		pc 			 <= pc_wire;
 		instr_decode	<= '0;
 	end
-	
-	if(!stall_if)
+	else if(!stall_if)
 	begin
 		pc_decode	 <= pc;		//pc to decode stage
 		pc 			 <= pc_wire;

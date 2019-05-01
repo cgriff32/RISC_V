@@ -28,6 +28,8 @@ input [`ALU_OP_WIDTH-1:0]			alu_op,
 //Forwarding control
 input [`REG_ADDR_WIDTH-1:0]		rd_addr_exe,
 output reg [`REG_ADDR_WIDTH-1:0] rd_addr_mem,
+input [`FORWARD_SEL_WIDTH-1:0]  forward_a_sel,
+input [`FORWARD_SEL_WIDTH-1:0]  forward_b_sel,
 input [`XLEN-1:0]						forward_mem,
 input [`XLEN-1:0]						forward_wb
 );
@@ -40,26 +42,36 @@ logic [`XLEN-1:0] alu_out;
 
 always_comb
 begin
-	
-	case(a_sel)
-		`A_SEL_RS1  : alu_a = rs1_exe;
-		`A_SEL_PC   : alu_a = pc_exe;
-		`A_SEL_ALU	: alu_a = forward_mem;
-		`A_SEL_MEM	: alu_a = forward_wb;
-		`A_SEL_ZERO : alu_a = `XLEN'b0;
-		default     : alu_a = `XLEN'b0;
-	endcase
-	
+	case(forward_a_sel)
+	  `FORWARD_SEL_EXE : 
+	  begin
+  	 	 case(a_sel)
+		  	 `A_SEL_RS1  : alu_a = rs1_exe;
+		    `A_SEL_PC   : alu_a = pc_exe;
+		    `A_SEL_ZERO : alu_a = `XLEN'b0;
+		    default     : alu_a = `XLEN'b0;
+	   endcase
+	   end
+	   `FORWARD_SEL_MEM : alu_a = forward_mem;
+	   `FORWARD_SEL_WB : alu_a = forward_wb;
+	   default : alu_a = `XLEN'b0;
+	 endcase
+	 
+	case(forward_b_sel)
+	  `FORWARD_SEL_EXE : begin
 	case(b_sel)
 		`B_SEL_RS2  : alu_b = rs2_exe;
 		`B_SEL_IMM  : alu_b = imm_exe;
 		`B_SEL_FOUR : alu_b = `XLEN'd4;
-		`B_SEL_ALU	: alu_b = forward_mem;
-		`B_SEL_MEM	: alu_b = forward_wb;
 		`B_SEL_ZERO : alu_b = `XLEN'b0;
 		default     : alu_b = `XLEN'b0;
 	endcase
-	
+		   end
+	   `FORWARD_SEL_MEM : alu_b = forward_mem;
+	   `FORWARD_SEL_WB : alu_b = forward_wb;
+	   default : alu_b = `XLEN'b0;
+	 endcase
+	 
 end
 
 always_ff @(posedge clk)

@@ -29,7 +29,7 @@ output reg [`REG_ADDR_WIDTH-1:0]	rd_addr_exe,
 //Input
 input [`IMM_SEL_WIDTH-1:0] 		imm_sel,
 input 									reg_write_en,
-input [`ALU_OP_WIDTH-2:0]			br_op,
+input [`BRANCH_OP_WIDTH-2:0]			br_op,
 
 //Branch control
 output [`XLEN-1:0] 					br_decode,
@@ -113,7 +113,7 @@ begin
 		
 		rs1_addr_exe <= rs1_addr;
 		rs2_addr_exe <= rs2_addr;
-		rd_addr_exe <= rd_addr;
+		rd_addr_exe <= instr_decode[11:7];
 	
 end
 

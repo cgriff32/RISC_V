@@ -61,7 +61,8 @@ dmem dmem(			.clk(clk),
 
 initial
 begin
-  
+   #5;
+   
   pc_mem <= '0;
   instr_mem <= '0;
   alu_mem <= '0;
@@ -70,16 +71,17 @@ begin
   mem_en <= '0;
   rd_addr_mem <= '0;
   
-  #5;
+  #10;
   
   mem_en <= '1;
   mem_wr <= '1;
   
   #10;
-  
   mem_wr <= '0;
+  rs2_mem <= '0;
   
-  
+  #10;
+  mem_wr <= '1;
   
 end
 
