@@ -3,7 +3,7 @@
 // Width-related constants
 
 `define INSTR_WIDTH     32
-`define XLEN				32
+`define XLEN			32
 `define OP_CODE_WIDTH	7
 `define REG_DATA_WIDTH	32
 `define REG_ADDR_WIDTH 	5
@@ -14,9 +14,9 @@
 
 `define OP_NOP 	7'b0010011
 
-`define OP_LUI		7'b0110111
+`define OP_LUI	7'b0110111
 `define OP_AUIPC	7'b0010111
-`define OP_JAL		7'b1101111
+`define OP_JAL	7'b1101111
 `define OP_JALR	7'b1100111
 `define OP_BRANCH	7'b1100011
 `define OP_LOAD	7'b0000011
