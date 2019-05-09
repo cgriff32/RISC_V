@@ -28,7 +28,7 @@
 
 # OS generated files #
 ######################
-.bak
+*.bak
 .DS_Store
 .DS_Store?
 ._*
