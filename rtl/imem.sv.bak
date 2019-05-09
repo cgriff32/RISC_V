@@ -14,7 +14,7 @@ wire [`XLEN-1:0]	iaddr = {2'b0, pc[31:2]};
 initial 
 begin
 
-	$readmemb("E:/Thesis/RISCV/RISC_V/rtl/test_bin.txt", imemory);
+	$readmemb("E:\Thesis\RISCV\RISC_V\rtl\test_bin.txt", imemory);
 end
 
 assign instr = imemory[iaddr];

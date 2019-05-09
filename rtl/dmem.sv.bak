@@ -26,9 +26,6 @@ begin
 		end
 end
 
-assign mem_read_data[7:0] = (!write_en && mem_en) ? datamem[mem_addr] : 32'b0;
-assign mem_read_data[15:8] = (!write_en && mem_en) ? datamem[mem_addr+1] : 32'b0;
-assign mem_read_data[23:16] = (!write_en && mem_en) ? datamem[mem_addr+2] : 32'b0;
-assign mem_read_data[31:24] = (!write_en && mem_en) ? datamem[mem_addr+3] : 32'b0;
+assign mem_read_data = (!write_en && mem_en) ? datamem[mem_addr] : 32'b0;
 
 endmodule

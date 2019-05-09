@@ -68,7 +68,6 @@ begin
 	if(stall_if)
 	begin
 	  pc_decode <= pc_decode;
-	  pc <= pc;
 		//instr_decode	<= '0;
 	end
 	else if(flush_if)

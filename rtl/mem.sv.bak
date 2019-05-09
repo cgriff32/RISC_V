@@ -29,12 +29,6 @@ input [`REG_ADDR_WIDTH-1:0]		rd_addr_mem,
 output reg [`REG_ADDR_WIDTH-1:0]	rd_addr_wb
 );
 
-initial
-begin
-  mem_wb <=  '0;
-  alu_wb <= '0;
-  instr_wb <= '0;
-end
 
 
 always_ff @(posedge clk)

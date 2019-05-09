@@ -92,15 +92,9 @@ wire									flush_if;
 wire									stall_if;
 wire      flush_id;
 
-//To Decode
-wire [`FORWARD_SEL_WIDTH-1:0]	branch_a_sel;
-wire [`FORWARD_SEL_WIDTH-1:0]	branch_b_sel;
-
 //To Execute
 wire [`FORWARD_SEL_WIDTH-1:0]	forward_a_sel;
 wire [`FORWARD_SEL_WIDTH-1:0]	forward_b_sel;
-
-
 
 control control(	.clk(clk),
 						//Control signals
@@ -140,9 +134,7 @@ control control(	.clk(clk),
 						//Forwarding control
 						//To Execute
 						.forward_a_sel(forward_a_sel),
-						.forward_b_sel(forward_b_sel),
-						.branch_a_sel(branch_a_sel),
-						.branch_b_sel(branch_b_sel)
+						.forward_b_sel(forward_b_sel)
 						);
 
 fetch fetch(		.clk(clk),
@@ -191,8 +183,8 @@ decode decode(		.clk(clk),
 						.reg_write_en(reg_en_wb),
 						.br_op(br_op),
 						//Forwarding control
-						.branch_a_sel(branch_a_sel),
-						.branch_b_sel(branch_b_sel),
+						.forward_a_sel(forward_a_sel),
+						.forward_b_sel(forward_b_sel),
 						.forward_mem(alu_mem),
 						.forward_wb(reg_wb),
 						//Branch control

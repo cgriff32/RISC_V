@@ -93,13 +93,13 @@ end
 always_comb
 begin
 	
-	case(branch_a_sel)
+	case(forward_a_sel)
 	`FORWARD_SEL_EXE : br_a = rs1_data;
 	`FORWARD_SEL_MEM : br_a = forward_mem;
 	`FORWARD_SEL_WB : br_a = forward_wb;
 	endcase
 	
-	case(branch_b_sel)
+	case(forward_b_sel)
 	`FORWARD_SEL_EXE : br_b = rs2_data;
 	`FORWARD_SEL_MEM : br_b = forward_mem;
 	`FORWARD_SEL_WB : br_b = forward_wb;

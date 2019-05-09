@@ -39,14 +39,6 @@ logic [`XLEN-1:0] alu_b;
 logic [`XLEN-1:0] forward_b;
 logic [`XLEN-1:0] alu_out;
 
-initial
-  begin
-    pc_mem <= '0;
-    alu_mem <= '0;
-    rs2_mem <= '0;
-    instr_mem <= '0;
-end
-
 	alu alu(alu_a, alu_b, alu_op, alu_out);
 
 always_comb
