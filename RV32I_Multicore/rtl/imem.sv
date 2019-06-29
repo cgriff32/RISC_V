@@ -13,8 +13,8 @@ wire [`XLEN-1:0] iaddr = {2'b0, pc[31:2]};
 
 initial 
 begin
-  //$readmemb("E:/Thesis/RISCV/RISC_V/rtl/test_bin.txt", imemory);
-  $readmemb($sformatf("E:/Thesis/RISCV/RISC_V/rtl/test_bin%0d.txt",mod_num), imemory);
+  $readmemb("E:/Thesis/RISCV/RV32I_Multicore/rtl/test_bin1.txt", imemory);
+  //$readmemb($sformatf("E:/Thesis/RISCV/RISC_V/rtl/test_bin%0d.txt",mod_num), imemory);
 
 end
 

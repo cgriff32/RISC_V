@@ -167,7 +167,7 @@ fetch fetch(
 	.stall_if(stall_if)
 );
 
-imem #(mod_num) imem(
+imem imem(
 	.pc(pc_imem),
 	.instr(instr_imem)
 );
