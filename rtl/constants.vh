@@ -4,11 +4,12 @@
 
 `define INSTR_WIDTH     32
 `define XLEN			32
+`define THREAD_WIDTH 3
 `define OP_CODE_WIDTH	7
 `define REG_DATA_WIDTH	32
 `define REG_ADDR_WIDTH 	5
 `define REG_FILE_SIZE	32
-`define ROB_SIZE 4
+`define ROB_SIZE 3
 `define SHAMT_WIDTH     5
 
 // Opcodes
@@ -27,10 +28,10 @@
 //FU Codes
 `define FU_SEL_WIDTH  3
 `define FU_SEL_NONE   `FU_SEL_WIDTH'b000
-`define FU_SEL_RS     `FU_SEL_WIDTH'b001
-`define FU_SEL_BRANCH `FU_SEL_WIDTH'b010
+`define FU_SEL_RS     `FU_SEL_WIDTH'b001  //[0]
+`define FU_SEL_BRANCH `FU_SEL_WIDTH'b010  //[1]
 `define FU_SEL_BLANK  `FU_SEL_WIDTH'd3
-`define FU_SEL_LOAD   `FU_SEL_WIDTH'b100
+`define FU_SEL_LOAD   `FU_SEL_WIDTH'b100  //[2]
 
 // ALU FUNCT3 encodings
 `define FUNCT3_ADD_SUB	 0
@@ -43,6 +44,7 @@
 `define FUNCT3_AND     	7
 
 // Branch FUNCT3 encodings
+`define BRANCH_OP_WIDTH 3
 `define FUNCT3_BEQ	  8
 `define FUNCT3_BNE  	9
 `define FUNCT3_BLT  	10

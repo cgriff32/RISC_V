@@ -12,10 +12,9 @@
 module decode(
 	
 	input clk,
-	input rst,
 	input stall_i,
 	
-	input decode_in decode_i,
+	input decode_in decode__i,
 	output decode_out decode_o
 	
 	
@@ -23,13 +22,13 @@ module decode(
 
 decode_internal decode_t;
 
-assign decode_t.rs1_addr = decode_i.instr_instr[19:15];
-assign decode_t.rs2_addr = decode_i.instr_instr[24:20]; 
-assign decode_t.rd_addr = decode_i.instr_instr[11:7]; 
+assign decode_t.rs1_addr = decode__i.instr_instr[19:15];
+assign decode_t.rs2_addr = decode__i.instr_instr[24:20]; 
+assign decode_t.rd_addr = decode__i.instr_instr[11:7]; 
 
-assign decode_t.opcode = decode_i.instr_instr[6:0];
-assign decode_t.funct3 = decode_i.instr_instr[14:12];
-assign decode_t.funct7 = decode_i.instr_instr[30];
+assign decode_t.opcode = decode__i.instr_instr[6:0];
+assign decode_t.funct3 = decode__i.instr_instr[14:12];
+assign decode_t.funct7 = decode__i.instr_instr[30];
 
 
 always_comb
@@ -38,7 +37,6 @@ begin
   decode_t.fu_sel = `FU_SEL_RS;
   decode_t.alu_op = `ALU_OP_ADD;
   decode_t.op_sel = `OP_SEL_R;
-  decode_t.illegal_instr = 0;
 
 	case(decode_t.opcode)
 
@@ -154,20 +152,14 @@ begin
   
   if(!stall_i)
   begin
-    if(decode_t.illegal_instr)
-      decode_o <= '0;
-   else
-   begin
     decode_o.imm <= decode_t.imm_wire;
     decode_o.rs1 <= decode_t.rs1_addr;
     decode_o.rs2 <= decode_t.rs2_addr;
     decode_o.rd <= decode_t.rd_addr;
     decode_o.alu_op <= decode_t.alu_op;
-    decode_o.pc <= decode_i.instr_pc;
-    decode_o.thread_id <= decode_i.instr_thread_id;
+    decode_o.pc <= decode_i.pc;
+    decode_o.thread_id <= decode_i.thread_id;
     decode_o.fu_sel <= decode_t.fu_sel;
-    decode_o.op_sel <= decode_t.op_sel;
-    end
   end
 end
   

@@ -2,8 +2,10 @@
 //Handle branches
 //Determine which reservation station to send instr to
 //Gen immediates
+//snoop for values (reg file, rob, cdb)
 
-//TODO: 4-way issue
+
+//TODO: update prodtable
 
 
 `include "constants.vh"
@@ -12,132 +14,118 @@
 module issue(
 	
 	input clk,
+	input rst,
 	input stall_i,
 	
-	input decode_issue_struct_o decode_i,
-	input rob_issue_struct_o rob_i,
-	input cdb_o cdb_i,
-	input prod_o prod_i,
-	input rs_full_i,
-	input load_full_i,
-	input branch_full_i,
-	
-	output issue_rs_struct_o rs_o,
-	output issue_branch_struct_o branch_o,
-	output issue_load_struct_o load_o,
-	output issue_prod_struct_o prod_table_o,
-	
-	
+	input issue_in issue_i,
+	output issue_out issue_o
 );
 
-logic check_rs1;
-logic check_rs2;
-
-logic bypass_rd;
+issue_internal issue_t;
 
 always_comb
 begin
-  check_rs1 = '0;
-  check_rs2 = '0;
-  rs1_value = '0;
-  rs1_rdy = 0;
-  rs1_q = '0;
-  rs2_value = '0;
-  rs2_rdy = 0;
-  rs2_q = '0;
+  issue_t.check_rs1 = 0;
+  issue_t.check_rs2 = 0;
   
-  bypass_rs = '0;
-  rd_bypass = '0;
+  issue_t.rs1_imm_value = '0;
+  issue_t.rs2_imm_value = '0;
+  issue_t.rs1_imm_rdy = 0;
+  issue_t.rs2_imm_rdy = 0;
+  
+  issue_t.bypass_rs = '0;
+  issue_t.rd_bypass = '0;
+  issue_t.br_comp = '0;
+  issue_t.br_offset = '0;
+  
+  issue_t.st_offset = '0;
 
-  case(decode_i.fu_sel)
+  case(issue_i.decode_fu_sel)
     `FU_SEL_BRANCH : 
     begin
-      case(decode_i.op_sel)
+      case(issue_i.decode_op_sel)
         `OP_SEL_JAL :
         begin
-          bypass_rs = 1;
-          rd_bypass = pc_four;
-          rs1_value = decode_i.pc;
-          rs1_rdy = 1;
-          rs2_value = decode_i.imm;
-          rs2_rdy = 1;
+          //to ROB
+          issue_t.bypass_rs = 1;
+          issue_t.rd_bypass = issue_t.pc_four;
+          //to branch control
+          issue_t.rs1_imm_value = issue_i.decode_pc;
+          issue_t.rs1_imm_rdy = 1;
+          issue_t.rs2_imm_value = issue_i.decode_imm;
+          issue_t.rs2_imm_rdy = 1;
         end
         
         `OP_SEL_JALR :
         begin
-          bypass_rs = 1;
-          rd_bypass = pc_four;
+          //to ROB
+          issue_t.bypass_rs = 1;
+          issue_t.rd_bypass = issue_t.pc_four;
+          //to branch control
+          issue_t.rs2_imm_value = issue_i.decode_imm;
+          issue_t.rs2_imm_rdy = 1;
         end
         
         `OP_SEL_BRANCH :
         begin
+          //to branch control
+          issue_t.br_comp = '1;
+          issue_t.br_offset = issue_i.decode_imm;
+          issue_t.check_rs1 = 1;
+          issue_t.check_rs2 = 1;
         end
       endcase
     end
     
     `FU_SEL_RS :
     begin
-      case(decode_i.op_sel)
+      case(issue_i.decode_op_sel)
         `OP_SEL_IMM :
         begin
-          if(!decode_i.rs1) //rs1 addr == 0
-          begin
-            rs1_value = '0;
-            rs1_rdy = 1;
-          end
-          else
-          begin
-            if(cdb_rs1) //rs1 on cdb
-            begin
-              rs1_value = cdb_i.value 
-              rs1_rdy = 1;
-            end
-            else if(rob_rs1) //check rob here
-            begin
-              rs1_value = rob_i.rs1_value
-              rs1_rdy = 1;
-            end
-            else
-            begin
-              rs1_q = decode_i.rs1;
-            end   
-          rs2_value = decode_i.imm;
-          rs2_rdy = 1;
-          end
+          issue_t.check_rs1 = 1;
+          issue_t.rs2_imm_value = issue_i.decode_imm;
+          issue_t.rs2_imm_rdy = 1;
         end
-        
         `OP_SEL_R :
         begin
+          issue_t.check_rs1 = 1;
+          issue_t.check_rs2 = 1;
         end
       endcase
     end
     
     `FU_SEL_LOAD : 
     begin
-      case(decode_i.op_sel)
+      case(issue_i.decode_op_sel)
         `OP_SEL_LOAD :
         begin
+          issue_t.check_rs1 = 1;
+          issue_t.rs2_imm_value = issue_i.decode_imm;
+          issue_t.rs2_imm_rdy = 1;
         end
         
         `OP_SEL_STORE :
         begin
+          issue_t.check_rs1 = 1;
+          issue_t.check_rs2 = 2;
+          issue_t.st_offset = issue_i.decode_imm;
         end
       endcase
     end
     
     `FU_SEL_NONE : 
     begin
-      case(decode_i.op_sel)
+      case(issue_i.decode_op_sel)
         `OP_SEL_LUI : 
         begin
-          bypass_rs = 1;
-          rd_bypass = decode_i.imm;
+          issue_t.bypass_rs = 1;
+          issue_t.rd_bypass = issue_i.decode_imm;
         end
         
         `OP_SEL_AUIPC : 
         begin
-          bypass_rs = 1;
-          rd_bypass = imm_pc;
+          issue_t.bypass_rs = 1;
+          issue_t.rd_bypass = issue_t.imm_pc;
         end
       endcase    
     end
@@ -145,20 +133,221 @@ begin
 end
 
 //find rs1/rs2
+//addr == 0, value = 0
+//check regfile, valid = 1 found
+//  else check prod table, valid = 1 found
+//    else check cdb, tag == addr found
+//else, pass rob tag
 always_comb
 begin
     
-  rs1_snooped = '0;
-  rs2_snooped = '0;
+  issue_t.rs1_snooped = 0;
+  issue_t.rs2_snooped = 0;
+  issue_t.rs1_snoop_value = '0;
+  issue_t.rs2_snoop_value = '0;
+  issue_t.rs1_snoop_rdy = 0;
+  issue_t.rs2_snoop_rdy = 0;
+  
+  issue_t.rs1_q = '0;
+  issue_t.rs2_q = '0;
 
-  if(cdb_i.tag == decode_i.rs1)
-    rs1_cdb = '1;    
-  if(cdb_i.tag == decode_i.rs2)
-    rs2_cdb = '1;
+  if(issue_t.check_rs1)
+  begin
+    if(issue_i.decode_rs1 == 0) //x0 always zero
+    begin
+      issue_t.rs1_snooped = 1;
+      issue_t.rs1_snoop_value = '0;
+      issue_t.rs1_snoop_rdy = 1;
+    end
+    else if(issue_i.prod_rs1_valid == 1) //rs in reg file
+    begin
+      issue_t.rs1_snoop_value = issue_i.reg_rs1_value;
+      issue_t.rs1_snoop_rdy = 1;
+      issue_t.rs1_snooped = 1;
+    end
+    else if(issue_i.prod_rs1_valid == 0) //rs not in reg file
+    begin
+      if(issue_i.rob_rs1_valid == 1) //rs in ROB
+      begin
+        issue_t.rs1_snoop_value = issue_i.rob_rs1_value;
+        issue_t.rs1_snoop_rdy = 1;
+        issue_t.rs1_snooped = 1;
+      end
+      else //rs not in ROB
+      begin
+        if(issue_i.cdb_tag == issue_i.prod_rs1_tag) //rs on CDB
+        begin
+          issue_t.rs1_snoop_value = issue_i.cdb_value;
+          issue_t.rs1_snoop_rdy = 1;
+          issue_t.rs1_snooped = 1;
+        end
+        else
+        begin
+          issue_t.rs1_q = issue_i.prod_rs1_tag;
+        end 
+      end
+    end
+  end
+  
+  if(issue_t.check_rs2)
+  begin
+    if(issue_i.decode_rs2 == 0) //x0 always zero
+    begin
+      issue_t.rs2_snoop_value = '0;
+      issue_t.rs2_snoop_rdy = 1;
+      issue_t.rs2_snooped = 1;
+    end
+    else if(issue_i.prod_rs2_valid == 1) //rs in reg file
+    begin
+      issue_t.rs2_snoop_value = issue_i.reg_rs2_value;
+      issue_t.rs2_snoop_rdy = 1;
+      issue_t.rs2_snooped = 1;
+    end
+    else if(issue_i.prod_rs2_valid == 0) //rs not in reg file
+    begin
+      if(issue_i.rob_rs2_valid == 1) //rs in ROB
+      begin
+        issue_t.rs2_snoop_value = issue_i.rob_rs2_value;
+        issue_t.rs2_snoop_rdy = 1;
+        issue_t.rs2_snooped = 1;
+      end
+      else //rs not in ROB
+      begin
+        if(issue_i.cdb_tag == issue_i.prod_rs2_tag) //rs on CDB
+        begin
+          issue_t.rs2_snoop_value = issue_i.cdb_value;
+          issue_t.rs2_snoop_rdy = 1;
+          issue_t.rs2_snooped = 1;
+        end
+        else
+        begin
+          issue_t.rs2_q = issue_i.prod_rs2_tag;
+        end    
+      end
+    end
+  end  
 end
 
-assign pc_four = decode_i.pc + 4;
-assign imm_pc = decode_i.imm + decode_i.pc;
+always_ff @(posedge clk)
+begin
+  if(!rst)
+  begin
+    issue_o.thread_id <= '0;
+    issue_o.rs1_value <= '0;
+    issue_o.rs2_value <= '0;
+    issue_o.rs1_rdy <= '0;
+    issue_o.rs2_rdy <= '0;
+    issue_o.rs1_q <= '0;
+    issue_o.rs2_q <= '0;
+    issue_o.alu_op <= '0;
+    issue_o.rob_en <= '0;
+    issue_o.rob_value <= '0;
+    issue_o.rob_valid <= '0;
+    issue_o.rob_dest <= '0;
+    issue_o.br_en <= '0;
+    issue_o.br_comp <= '0;
+    issue_o.br_offset <= '0;
+    issue_o.br_pc <= '0;
+    issue_o.rs_en <= '0;
+    issue_o.rs_tag <= '0;
+    issue_o.ld_en <= '0;
+    issue_o.ld_offset <= '0;
+    issue_o.prod_en <= '0;
+    issue_o.prod_rd_addr <= '0;
+    issue_o.prod_tag <= '0;
+  end
+  else
+  begin  
+    issue_o.rob_en <= 0;
+    issue_o.br_en <= 0;
+    issue_o.prod_en <= 1;
+    issue_o.rs_en <= 0;
+    issue_o.ld_en <= 0;
+    
+    issue_o.prod_rd_addr <= issue_i.decode_rd;
+    issue_o.prod_tag <= issue_i.rob_tag;
+    issue_o.alu_op <= issue_i.decode_alu_op;
+    issue_o.rs_tag <= issue_i.rob_tag;
+  
+    if(!stall_i)
+    begin
+      case(issue_i.decode_fu_sel)
+      `FU_SEL_BRANCH :
+      begin
+        if(issue_t.bypass_rs)
+        begin
+          issue_o.rob_value <= issue_t.rd_bypass;
+          issue_o.rob_dest <= issue_i.decode_rd;
+          issue_o.rob_valid <= 1;
+          issue_o.rob_en <= 1;
+        end
+        
+          issue_o.br_en <= issue_i.decode_fu_sel[1];
+          issue_o.br_comp <= issue_t.br_comp;
+          issue_o.prod_en <= !issue_t.br_comp;
+          issue_o.rs1_value <= issue_t.rs1_value;
+          issue_o.rs2_value <= issue_t.rs2_value;
+          issue_o.rs1_rdy <= issue_t.rs1_rdy;
+          issue_o.rs2_rdy <= issue_t.rs2_rdy;
+          issue_o.rs1_q <= issue_t.rs1_q;
+          issue_o.rs2_q <= issue_t.rs2_q;
+          issue_o.br_pc <= issue_i.decode_pc;
+          issue_o.br_offset <= issue_t.br_offset;
+      end
+      `FU_SEL_RS :
+      begin
+        issue_o.rob_en <= 1;
+        issue_o.rs_en <= issue_i.decode_fu_sel[0];
+        issue_o.rs1_value <= issue_t.rs1_value;
+        issue_o.rs2_value <= issue_t.rs2_value;
+        issue_o.rs1_rdy <= issue_t.rs1_rdy;
+        issue_o.rs2_rdy <= issue_t.rs2_rdy;
+        issue_o.rs1_q <= issue_t.rs1_q;
+        issue_o.rs2_q <= issue_t.rs2_q;
+      end
+      `FU_SEL_LOAD :
+      begin
+        if(issue_t.bypass_rs)
+        begin
+          issue_o.rob_value <= issue_t.rd_bypass;
+          issue_o.rob_dest <= issue_i.decode_rd;
+          issue_o.rob_valid <= 1;
+          issue_o.rob_en <= 1;
+        end
+        
+        issue_o.ld_en <= issue_i.decode_fu_sel[2];
+        issue_o.rs1_value <= issue_t.rs1_value;
+        issue_o.rs2_value <= issue_t.rs2_value;
+        issue_o.rs1_rdy <= issue_t.rs1_rdy;
+        issue_o.rs2_rdy <= issue_t.rs2_rdy;
+        issue_o.rs1_q <= issue_t.rs1_q;
+        issue_o.rs2_q <= issue_t.rs2_q;
+        issue_o.ld_offset <= issue_t.st_offset;
+      end
+      `FU_SEL_NONE :
+      begin
+        issue_o.rob_en <= 1;
+        issue_o.rob_value <= issue_t.rd_bypass;
+        issue_o.rob_dest <= issue_i.decode_rd;
+        issue_o.rob_valid <= 1;
+      end  
+      endcase
+    end
+  end
+end
 
+assign pc_four = issue_i.decode_pc + 4;
+assign imm_pc = issue_i.decode_imm + issue_i.decode_pc;
+
+assign issue_t.rs1_value = issue_t.rs1_snooped ? issue_t.rs1_snoop_value : issue_t.rs1_imm_value;
+assign issue_t.rs2_value = issue_t.rs2_snooped ? issue_t.rs2_snoop_value : issue_t.rs2_imm_value;
+assign issue_t.rs1_rdy = issue_t.rs1_snooped ? issue_t.rs1_snoop_rdy : issue_t.rs1_imm_rdy;
+assign issue_t.rs2_rdy = issue_t.rs2_snooped ? issue_t.rs2_snoop_rdy : issue_t.rs2_imm_rdy;
+
+assign issue_o.rs1_addr = rst ? issue_i.decode_rs1 : '0;
+assign issue_o.rs2_addr = rst ? issue_i.decode_rs2 : '0;
+
+assign issue_o.rs1_tag = rst ? issue_i.prod_rs1_tag : '0;
+assign issue_o.rs2_tag = rst ? issue_i.prod_rs2_tag : '0;
 
 endmodule
