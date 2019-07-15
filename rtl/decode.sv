@@ -37,7 +37,7 @@ begin
   decode_t.imm_sel = `IMM_SEL_I;
   decode_t.fu_sel = `FU_SEL_RS;
   decode_t.alu_op = `ALU_OP_ADD;
-  decode_t.op_sel = `OP_SEL_R;
+  decode_t.op_sel = `OP_SEL_NONE;
   decode_t.illegal_instr = 0;
 
 	case(decode_t.opcode)
@@ -151,25 +151,54 @@ end
 
 always_ff @(posedge clk)
 begin
-  
-  if(!stall_i)
+  if(!rst)
   begin
-    if(decode_t.illegal_instr)
-      decode_o <= '0;
-   else
-   begin
-    decode_o.imm <= decode_t.imm_wire;
-    decode_o.rs1 <= decode_t.rs1_addr;
-    decode_o.rs2 <= decode_t.rs2_addr;
-    decode_o.rd <= decode_t.rd_addr;
-    decode_o.alu_op <= decode_t.alu_op;
-    decode_o.pc <= decode_i.instr_pc;
-    decode_o.thread_id <= decode_i.instr_thread_id;
-    decode_o.fu_sel <= decode_t.fu_sel;
-    decode_o.op_sel <= decode_t.op_sel;
-    end
+      decode_o.imm <= '0;
+      decode_o.rs1 <= '0;
+      decode_o.rs2 <= '0;
+      decode_o.rd <= '0;
+      decode_o.alu_op <= '0;
+      decode_o.pc <= '0;
+      decode_o.thread_id <= '0;
+      decode_o.fu_sel <= '0;
+      decode_o.op_sel <= '0;
+      decode_o.issue_stall <= '1;
   end
+  else
+  begin
+    decode_o.issue_stall <= stall_i;
+    if(!stall_i)
+    begin
+      if(decode_t.illegal_instr)
+      begin
+        decode_o.imm <= '0;
+        decode_o.rs1 <= '0;
+        decode_o.rs2 <= '0;
+        decode_o.rd <= '0;
+        decode_o.alu_op <= '0;
+        decode_o.pc <= '0;
+        decode_o.thread_id <= '0;
+        decode_o.fu_sel <= '0;
+        decode_o.op_sel <= '0;
+        decode_o.issue_stall = 1;
+      end
+      else
+      begin
+        decode_o.imm <= decode_t.imm_wire;
+        decode_o.rs1 <= decode_t.rs1_addr;
+        decode_o.rs2 <= decode_t.rs2_addr;
+        decode_o.rd <= decode_t.rd_addr;
+        decode_o.alu_op <= decode_t.alu_op;
+        decode_o.pc <= decode_i.instr_pc;
+        decode_o.thread_id <= decode_i.instr_thread_id;
+        decode_o.fu_sel <= decode_t.fu_sel;
+        decode_o.op_sel <= decode_t.op_sel;
+      end
+    end
+ end
 end
   
+  assign decode_o.issue_ack = |(decode_t.op_sel) && !stall_i;
+
 endmodule
 

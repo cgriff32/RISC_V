@@ -1,25 +1,15 @@
 `include "constants.vh"
+`include "struct.v"
 
 module prod_table(
 	
 	input clk,
+	input rst,
+	input stall_i,
 	
-	input issue_en,
-	input [`REG_ADDR_WIDTH-1:0] rd_addr,
-	input [`ROB_SIZE-1:0] rd_tag,
-	
-	input [`REG_ADDR_WIDTH-1:0] r1_addr, 
-	input [`REG_ADDR_WIDTH-1:0] r2_addr,
-	output r1_valid,
-	output [`ROB_SIZE-1:0] r1_tag,
-	output r2_valid, 
-	output [`ROB_SIZE-1:0] r2_tag,
-	
-	
-	input rob_en,
-	input rob_dest,
-	input rob_tag
-);
+  input prod_in prod_i,
+  output prod_out prod_o
+  );
 
 reg [`ROB_SIZE:0] prodtable [`REG_FILE_SIZE-1:0];
 wire enable_local;
@@ -29,28 +19,44 @@ integer i;
 initial
 begin
 	for(i=0;i<32;i=i+1)
-    prodtable[i] <= '0;
-    
-	prodtable[0][0] <= 1; //r0 is always valid;
+	begin
+    prodtable[i][`ROB_SIZE-1:0] <= '0;
+    prodtable[i][`ROB_SIZE] <= 1'b1;
+  end
 end
 
 always_ff @(posedge clk)
 begin
-	if(issue_en && |rd_addr) //don't overwrite r0
-	begin
-		prodtable[rd_addr] <= {1'b0, rd_tag};
-	end
-  if(rob_en)
+  if(!rst)
   begin
-    if(prodtable[rob_dest][`ROB_SIZE:1] == rob_tag)
-      prodtable[rob_dest][0] <= 1;
+ 	  for(i=0;i<`REG_FILE_SIZE;i=i+1)
+ 	  begin
+      prodtable[i][`ROB_SIZE-1:0] <= '0;
+      prodtable[i][`ROB_SIZE] <= 1'b1;
+    end
   end
+  else
+    if(!stall_i)
+   	  if(prod_i.issue_en) //don't overwrite r0
+ 	    begin
+ 	      if(|prod_i.rd_addr)
+ 	      begin
+		      prodtable[prod_i.rd_addr] <= {1'b0, prod_i.rd_tag};
+        end
+      end
+      else if(prod_i.rob_en)
+      begin
+        if(prodtable[prod_i.rob_dest][`ROB_SIZE-1:0] == prod_i.rob_tag )
+        begin
+          prodtable[prod_i.rob_dest][`ROB_SIZE] <= 1;
+        end
+      end  
 end
 
 //Read from regfile (return 0 for zero register)
-assign r1_valid = |r1_addr ? prodtable[r1_addr][0] : 1;
-assign r1_tag = |r2_addr ? prodtable[r1_addr][`ROB_SIZE:1] : 0;
-assign r2_valid = |r1_addr ? prodtable[r2_addr][0] : 1;
-assign r2_tag = |r2_addr ? prodtable[r2_addr][`ROB_SIZE:1] : 0;
+assign prod_o.r1_valid = |prod_i.r1_addr ? prodtable[prod_i.r1_addr][`ROB_SIZE] : 1;
+assign prod_o.r1_tag = |prod_i.r2_addr ? prodtable[prod_i.r1_addr][`ROB_SIZE-1:0] : 0;
+assign prod_o.r2_valid = |prod_i.r1_addr ? prodtable[prod_i.r2_addr][`ROB_SIZE] : 1;
+assign prod_o.r2_tag = |prod_i.r2_addr ? prodtable[prod_i.r2_addr][`ROB_SIZE-1:0] : 0;
 
 endmodule

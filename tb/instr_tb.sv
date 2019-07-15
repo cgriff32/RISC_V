@@ -39,6 +39,10 @@ typedef struct packed
 
 instr_in instr_i;
 instr_out instr_o;
+
+int i;
+logic [`THREAD_WIDTH-1:0] thread_id;
+logic [`XLEN-1:0] pc;
 	
 instr DUT(
 	.clk(clk),
@@ -51,26 +55,24 @@ instr DUT(
 						
 initial
 begin
-  #5
   
+  #5
   instr_i <= 0;
+  rst <= 0;
+  stall_i <= 0;
+  #10;
   rst <= 1;
   
-  instr_i.pc_thread_id <= 0;
   
-  stall_i <= 1;
   #10;
-
-
-  stall_i <= 0;
-  rst <= 0;
+  instr_i.decode_ack <= 1;
+  instr_i.pc_thread_id <= 1;
   #10;
-  #10;
-  #10;
-  #10;
-  instr_i.decode_ack = 1;
-  #30
   instr_i.pc_thread_id <= 4;
+  #10;
+  instr_i.pc_pc <= 16;
+  #10;
+  #30;
   
   
 end
@@ -81,7 +83,5 @@ end
     clk <= 1; #5;
     clk <= 0; #5;
   end
-
-		
 		
 endmodule

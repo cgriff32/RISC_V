@@ -5,14 +5,14 @@
 module cdb_arbiter(
 	
 	input clk,
+	input rst,
+	input stall_i,
 	
 	input [2:0] cdb_req,
-	input cdb_struct_t cdb_bus,
-	output reg [2:0] fu_sel
+	output [2:0] fu_sel
 	
 );
 
-reg [3:0] alu_sel;
 logic [2:0] fu_sel_wire;
 reg [1:0] last_grant;
 logic [1:0] last_grant_wire;
@@ -57,13 +57,28 @@ last_grant_wire = last_grant;
         end
       end
     end
+    default: fu_sel_wire <= '0;
   endcase
 end
 
 always_ff @(posedge clk)
 begin
-  last_grant <= last_grant_wire;
-  fu_sel <= fu_sel_wire;
+  if (!rst)
+  begin
+    last_grant <= 2'b10;
+    //fu_sel <= '0;
+  end
+  else
+  begin  
+    if(!stall_i)
+    begin
+      last_grant <= last_grant_wire;
+      //fu_sel <= fu_sel_wire;
+    end
+  end
 end
+
+assign fu_sel = fu_sel_wire;
+assign cdb_bus = !fu_sel ? '0 : 'z;
 
 endmodule

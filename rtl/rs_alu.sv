@@ -5,6 +5,8 @@
 module rs_alu(
 	
 	input clk,
+	input rst,
+	input stall_i,
 	
 	input alu_in alu_i,
 	output alu_out alu_o
@@ -21,22 +23,24 @@ logic [`XLEN-1:0] data_ram_value;
 
 
 alu alu(
-  .a(a),
-  .b(b),
-  .op(op),
+  .a(alu_i.rs_v1),
+  .b(alu_i.rs_v2),
+  .alu_op(alu_i.rs_op),
   .out(out)
 );
 
-//FIFO #((`ROB_SIZE+`XLEN),2) alu_fifo(
-//  .clk(clk), // Clock input
-//  .rst(rst), // Active high reset
-//  .wr_cs(!alu_i.fifo_en), // Write chip select
-//  .rd_cs(alu_i.cdb_en), // Read chipe select
-//  .data_in({alu_i.rs_tag, out}), // Data input
-//  .rd_en(alu_i.cdb_en), // Read enable (from cdb arbiter)
-//  .wr_en(!alu_i.fifo_en), // Write Enable (from reservation station)
-//  .data_out({data_ram_tag, data_ram_value}), // Data Output
-//  .empty(alu_o.fifo_empty), // FIFO empty (not empty is cdb request)
-//  .full(alu_o.fifo_full) // FIFO full
-//  );
+FIFOv2 #((`ROB_SIZE+`XLEN),3) alu_fifo(
+  .DATAOUT({data_ram_tag, data_ram_value}), 
+  .full(alu_o.fifo_full), 
+  .empty(alu_o.fifo_empty), 
+  .clock(clk), 
+  .reset(rst), 
+  .wn(alu_i.fifo_en && !stall_i), 
+  .rn(alu_i.cdb_en && !stall_i), 
+  .DATAIN({alu_i.rs_tag, out})
+  );
+  
+assign alu_o.tag = alu_i.cdb_en ? data_ram_tag : 'z;
+assign alu_o.value = alu_i.cdb_en ? data_ram_value : 'z;
+assign alu_o.valid = alu_i.cdb_en ? !alu_o.fifo_empty : 'z;
 endmodule

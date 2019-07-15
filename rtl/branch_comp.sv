@@ -5,7 +5,7 @@ module branch_comp(
 	input [`XLEN-1:0] a,
 	input [`XLEN-1:0] b,
 	
-	input [`BRANCH_OP_WIDTH-1:0] br_op,
+	input [`ALU_OP_WIDTH-1:0] br_op,
 	
 	output logic out
 );

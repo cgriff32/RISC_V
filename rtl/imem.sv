@@ -31,20 +31,18 @@ begin
 
 end
 
-assign instr = imemory0[iaddr];
-
-//always_comb
-//begin
-//  case(thread_id)
-//    3'b000: instr = imemory0[iaddr];
-//    3'b001: instr = imemory1[iaddr];
-//    3'b010: instr = imemory2[iaddr];
-//    3'b011: instr = imemory3[iaddr];
-//    3'b100: instr = imemory4[iaddr];
-//    3'b101: instr = imemory5[iaddr];
-//    3'b110: instr = imemory6[iaddr];
-//    3'b111: instr = imemory7[iaddr];
-//  endcase
-//end
+always_comb
+begin
+  case(thread_id)
+    3'b000: instr = imemory0[iaddr];
+    3'b001: instr = imemory1[iaddr];
+    3'b010: instr = imemory2[iaddr];
+    3'b011: instr = imemory3[iaddr];
+    3'b100: instr = imemory4[iaddr];
+    3'b101: instr = imemory5[iaddr];
+    3'b110: instr = imemory6[iaddr];
+    3'b111: instr = imemory7[iaddr];
+  endcase
+end
 
 endmodule

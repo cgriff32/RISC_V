@@ -9,9 +9,10 @@
 `include "constants.vh"
 `include "struct.v"
 
-module decode(
+module load_fu(
 	
 	input clk,
+	input rst,
 	input stall_i,
 	
 	input decode_in decode__i,

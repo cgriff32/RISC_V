@@ -44,13 +44,14 @@
 `define FUNCT3_AND     	7
 
 // Branch FUNCT3 encodings
-`define BRANCH_OP_WIDTH 3
-`define FUNCT3_BEQ	  8
-`define FUNCT3_BNE  	9
-`define FUNCT3_BLT  	10
-`define FUNCT3_BGE   11
-`define FUNCT3_BLTU 	12
-`define FUNCT3_BGEU 	13
+`define BRANCH_OP_WIDTH 4
+
+`define FUNCT3_BEQ	 0
+`define FUNCT3_BNE  	1
+`define FUNCT3_BLT  	4
+`define FUNCT3_BGE  	5
+`define FUNCT3_BLTU 	6
+`define FUNCT3_BGEU 	7
 
 // ALU Funct Codes
 `define ALU_OP_WIDTH 5
@@ -71,22 +72,24 @@
 `define ALU_OP_AND  `ALU_OP_WIDTH'd13
 
 `define OP_SEL_WIDTH 2
+
+`define OP_SEL_NONE `OP_SEL_WIDTH'd0
 //Branch OP sel
-`define OP_SEL_JAL			`OP_SEL_WIDTH'd0
-`define OP_SEL_JALR		`OP_SEL_WIDTH'd1
-`define OP_SEL_BRANCH		`OP_SEL_WIDTH'd2
+`define OP_SEL_JAL			`OP_SEL_WIDTH'd1
+`define OP_SEL_JALR		`OP_SEL_WIDTH'd2
+`define OP_SEL_BRANCH		`OP_SEL_WIDTH'd3
 
 //Load/store OP sel
-`define OP_SEL_LOAD `OP_SEL_WIDTH'd0
-`define OP_SEL_STORE `OP_SEL_WIDTH'd1
+`define OP_SEL_LOAD `OP_SEL_WIDTH'd1
+`define OP_SEL_STORE `OP_SEL_WIDTH'd2
 
 //LUI/AUIPC OP sel
-`define OP_SEL_LUI `OP_SEL_WIDTH'd0
-`define OP_SEL_AUIPC `OP_SEL_WIDTH'd1
+`define OP_SEL_LUI `OP_SEL_WIDTH'd1
+`define OP_SEL_AUIPC `OP_SEL_WIDTH'd2
 
 //R/IMM OP sel
-`define OP_SEL_IMM `OP_SEL_WIDTH'd0
-`define OP_SEL_R    `OP_SEL_WIDTH'd1
+`define OP_SEL_IMM `OP_SEL_WIDTH'd1
+`define OP_SEL_R    `OP_SEL_WIDTH'd2
 
 //imm_sel
 `define IMM_SEL_WIDTH 	3
