@@ -45,7 +45,7 @@ begin
       else
       begin
         pc_t.instr_stall = 1;
-        pc_t.pc = pc_n[pc_t.thread_id_n];
+        pc_t.pc = pc_n[pc_t.thread_id];
         pc_t.thread_id_n = pc_t.thread_id;
         pc_t.pc_n = pc_n[pc_t.thread_id];
       end
@@ -68,7 +68,7 @@ begin
     pc_n[6] <= '0;
     pc_n[7] <= '0;
     pc_t.thread_id <= '0;
-    pc_o.instr_stall = '1;
+    pc_o.instr_stall <= '1;
   end
   else
   begin  
@@ -78,7 +78,7 @@ begin
       pc_o.pc <= pc_t.pc;
       pc_o.thread_id <= pc_t.thread_id;
       pc_t.thread_id <= pc_t.thread_id_n;
-      pc_o.instr_stall = pc_t.instr_stall;
+      pc_o.instr_stall <= pc_t.instr_stall;
     end
   end
 end

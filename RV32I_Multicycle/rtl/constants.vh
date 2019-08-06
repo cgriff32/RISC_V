@@ -23,6 +23,7 @@
 `define OP_STORE	7'b0100011
 `define OP_IMM 	7'b0010011
 `define OP_R		7'b0110011
+`define ECALL	7'b1110011
 
 // ALU FUNCT3 encodings
 
@@ -84,22 +85,18 @@
 
 //a_sel
 
-`define A_SEL_WIDTH 	3
+`define A_SEL_WIDTH 	2
 `define A_SEL_RS1		`A_SEL_WIDTH'd0
 `define A_SEL_PC		`A_SEL_WIDTH'd1
-`define A_SEL_ALU		`A_SEL_WIDTH'd2
-`define A_SEL_MEM		`A_SEL_WIDTH'd3
-`define A_SEL_ZERO	`A_SEL_WIDTH'd4
+`define A_SEL_ZERO	`A_SEL_WIDTH'd2
 
 //b_sel
 
-`define B_SEL_WIDTH 	3
+`define B_SEL_WIDTH 	2
 `define B_SEL_RS2		`B_SEL_WIDTH'd0
 `define B_SEL_IMM		`B_SEL_WIDTH'd1
 `define B_SEL_FOUR	`B_SEL_WIDTH'd2
-`define B_SEL_ALU		`B_SEL_WIDTH'd3
-`define B_SEL_MEM		`B_SEL_WIDTH'd4
-`define B_SEL_ZERO	`B_SEL_WIDTH'd5
+`define B_SEL_ZERO   `B_SEL_WIDTH'd3
 
 //forward_sel
 `define FORWARD_SEL_WIDTH	2

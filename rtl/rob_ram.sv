@@ -62,7 +62,7 @@ module rob_ram #(
   if(wr_en_0)
     mem[addr_in_0] <= data_in_0;
   if(wr_en_1)
-    mem[addr_in_1] <= data_in_1;
+    mem[addr_in_1][37:5] <= data_in_1[37:5];
   end
  end
  

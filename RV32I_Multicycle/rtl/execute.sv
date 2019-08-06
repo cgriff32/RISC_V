@@ -4,6 +4,7 @@
 module execute(
 	
 	input clk,
+	input rst,
 	
 	//Data pipeline
 	//From ID/EXE
@@ -38,14 +39,6 @@ logic [`XLEN-1:0] alu_a;
 logic [`XLEN-1:0] alu_b;
 logic [`XLEN-1:0] forward_b;
 logic [`XLEN-1:0] alu_out;
-
-initial
-begin
-    pc_mem <= '0;
-    alu_mem <= '0;
-    rs2_mem <= '0;
-    instr_mem <= '0;
-end
 
 alu alu(
 	alu_a, 
@@ -87,15 +80,24 @@ begin
 	endcase
 end
 
-always_ff @(posedge clk)
+always_ff @(posedge clk, negedge rst)
 begin
-	
-	instr_mem<= instr_exe;
-	pc_mem <= pc_exe;
-	rs2_mem <= forward_b;
-	alu_mem <= alu_out;
-	rd_addr_mem <= rd_addr_exe;
-	
+	if(!rst)
+	begin
+		instr_mem <= '0;
+		pc_mem <= '0;
+		rs2_mem <= '0;
+		alu_mem <= '0;
+		rd_addr_mem <= '0;
+	end
+	else
+	begin
+		instr_mem <= instr_exe;
+		pc_mem <= pc_exe;
+		rs2_mem <= forward_b;
+		alu_mem <= alu_out;
+		rd_addr_mem <= rd_addr_exe;
+	end
 end
 
 endmodule

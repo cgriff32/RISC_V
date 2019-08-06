@@ -3,9 +3,20 @@
 
 
 `include "constants.vh"
-module RISCV_Multicycle(
+module riscv_multicycle(
 	input clk,
-	output logic [31:0] debug
+	input rst,
+	output [9:0] pc_imem,
+	input [`XLEN-1:0] instr_imem,
+	
+
+	//To Mem
+	output [9:0] addr_mem,
+	output [`XLEN-1:0] data_in_mem,
+	input [`XLEN-1:0] data_out_mem,
+	output [`MEMRW_SEL_WIDTH-1:0] mem_wr_mem,
+	output [`MEMRW_SEL_WIDTH-1:0] mem_en_mem,
+	output [3:0] mem_byte_mem
 	
 );
 
@@ -13,98 +24,92 @@ parameter mod_num = 1;
 
 //Pipeline registers
 //Fetch/Decode
-wire [`XLEN-1:0] pc_decode;
-wire [`XLEN-1:0] instr_decode;
-
-//Instruction memory signals
-wire [`XLEN-1:0] pc_imem;
-wire [`XLEN-1:0] instr_imem;
+logic [`XLEN-1:0] pc_decode;
+logic [`XLEN-1:0] instr_decode;
 
 //Decode/Execute
-wire [`XLEN-1:0] pc_exe;
-wire [`XLEN-1:0] rs1_data_exe;
-wire [`XLEN-1:0] rs2_data_exe;
-wire [`XLEN-1:0] instr_exe;
-wire [`XLEN-1:0] imm_exe;
+logic [`XLEN-1:0] pc_exe;
+logic [`XLEN-1:0] rs1_data_exe;
+logic [`XLEN-1:0] rs2_data_exe;
+logic [`XLEN-1:0] instr_exe;
+logic [`XLEN-1:0] imm_exe;
 
 //Execute/Memory
-wire [`XLEN-1:0] pc_mem;
-wire [`XLEN-1:0] alu_mem;
-wire [`XLEN-1:0] rs2_data_mem;
-wire [`XLEN-1:0] instr_mem;
-
-//Data memory signals
-wire [`XLEN-1:0] mem_data;
+logic [`XLEN-1:0] pc_mem;
+logic [`XLEN-1:0] alu_mem;
+logic [`XLEN-1:0] instr_mem;
+logic [`XLEN-1:0] rs2_data_mem;
+logic [`XLEN-1:0] mem_data;
 
 //Memory/Write Back
-wire [`XLEN-1:0] mem_wb;
-wire [`XLEN-1:0] alu_wb;
-wire [`XLEN-1:0] reg_wb;
-wire [`XLEN-1:0] instr_wb;
+logic [`XLEN-1:0] mem_wb;
+logic [`XLEN-1:0] alu_wb;
+logic [`XLEN-1:0] reg_wb;
+logic [`XLEN-1:0] instr_wb;
 
 //Branch signals
 //From Decode
-wire [`XLEN-1:0] br_decode;
-wire [`XLEN-1:0] jal_decode;
-wire [`XLEN-1:0] jalr_decode;
+logic [`XLEN-1:0] br_decode;
+logic [`XLEN-1:0] jal_decode;
+logic [`XLEN-1:0] jalr_decode;
 
 //Control Signals
 	//Input
 //From Decode
-wire br_true;
+logic br_true;
 
 //Output
 //To Fetch
-wire [`PC_SEL_WIDTH-1:0] pc_sel;
+logic [`PC_SEL_WIDTH-1:0] pc_sel;
 
 //To Decode
-wire [`ALU_OP_WIDTH-1:0] br_op;
-wire [`IMM_SEL_WIDTH-1:0] imm_sel;
+logic [`ALU_OP_WIDTH-1:0] br_op;
+logic [`IMM_SEL_WIDTH-1:0] imm_sel;
 
 //To Execute
-wire [`B_SEL_WIDTH-1:0] b_sel_exe; 
-wire [`A_SEL_WIDTH-1:0] a_sel_exe; 
-wire [`ALU_OP_WIDTH-1:0] alu_sel_exe; 
+logic [`B_SEL_WIDTH-1:0] b_sel_exe; 
+logic [`A_SEL_WIDTH-1:0] a_sel_exe; 
+logic [`ALU_OP_WIDTH-1:0] alu_sel_exe; 
 
-//To Mem
-wire [`MEMRW_SEL_WIDTH-1:0] mem_wr_mem;
-wire [`MEMRW_SEL_WIDTH-1:0] mem_en_mem;
+
 
 //To WB
-wire [`WB_SEL_WIDTH-1:0] wb_sel_wb;
-wire [`WB_SEL_WIDTH-1:0] reg_en_wb;
+logic [`WB_SEL_WIDTH-1:0] wb_sel_wb;
+logic [`WB_SEL_WIDTH-1:0] reg_en_wb;
 
 //Forwarding/Hazard detection
 	//Input
 //From Execute
-wire [`REG_ADDR_WIDTH-1:0] rs1_addr_exe;
-wire [`REG_ADDR_WIDTH-1:0] rs2_addr_exe;
-wire [`REG_ADDR_WIDTH-1:0] rd_addr_exe;
+logic [`REG_ADDR_WIDTH-1:0] rs1_addr_exe;
+logic [`REG_ADDR_WIDTH-1:0] rs2_addr_exe;
+logic [`REG_ADDR_WIDTH-1:0] rd_addr_exe;
 
 //From Mem
-wire [`REG_ADDR_WIDTH-1:0] rd_addr_mem;
+logic [`REG_ADDR_WIDTH-1:0] rd_addr_mem;
 
 //From WB
-wire [`REG_ADDR_WIDTH-1:0] rd_addr_wb;
+logic [`REG_ADDR_WIDTH-1:0] rd_addr_wb;
 
 //Output
 //To Fetch
-wire flush_if;
-wire stall_if;
-wire flush_id;
+logic flush_if;
+logic stall_if;
+logic flush_id;
 
 //To Decode
-wire [`FORWARD_SEL_WIDTH-1:0] branch_a_sel;
-wire [`FORWARD_SEL_WIDTH-1:0] branch_b_sel;
+logic [`FORWARD_SEL_WIDTH-1:0] branch_a_sel;
+logic [`FORWARD_SEL_WIDTH-1:0] branch_b_sel;
 
 //To Execute
-wire [`FORWARD_SEL_WIDTH-1:0] forward_a_sel;
-wire [`FORWARD_SEL_WIDTH-1:0] forward_b_sel;
+logic [`FORWARD_SEL_WIDTH-1:0] forward_a_sel;
+logic [`FORWARD_SEL_WIDTH-1:0] forward_b_sel;
 
 
 
 control control(
 	.clk(clk),
+	.rst(rst),
+	.led(led),
 	//Control signals
 	//From Decode
 	.instr_decode(instr_decode),
@@ -122,6 +127,7 @@ control control(
 	//EXE/MEM registers
 	.mem_wr_mem(mem_wr_mem),
 	.mem_en_mem(mem_en_mem),
+	.mem_byte_mem(mem_byte_mem),
 	//MEM/WB registers
 	.wb_sel_wb(wb_sel_wb),
 	.reg_en_wb(reg_en_wb),
@@ -149,6 +155,7 @@ control control(
 
 fetch fetch(
 	.clk(clk),
+	.rst(rst),
 	//Data pipeline
 	//IF/ID registers
 	.pc_decode(pc_decode), 
@@ -167,13 +174,9 @@ fetch fetch(
 	.stall_if(stall_if)
 );
 
-imem #(mod_num) imem(
-	.pc(pc_imem),
-	.instr(instr_imem)
-);
-
 decode decode(
 	.clk(clk),
+	.rst(rst),
 	//Data pipeline
 	//From IF/ID
 	.pc_decode(pc_decode), 
@@ -211,6 +214,7 @@ decode decode(
 
 execute execute(
 	.clk(clk),
+	.rst(rst),
 	//Data pipeline
 	//From ID/EXE
 	.pc_exe(pc_exe),
@@ -237,15 +241,17 @@ execute execute(
 	.forward_wb(reg_wb)
 );
 
+assign addr_mem = alu_mem[9:0];
+assign data_in_mem =  rs2_data_mem;
+assign mem_data = data_out_mem;
 
 mem mem(
 	.clk(clk),
+	.rst(rst),
 	//Data pipeline
 	//From EXE/MEM
-	.pc_mem(pc_mem),
 	.instr_mem(instr_mem),
 	.alu_mem(alu_mem),
-	.rs2_mem(rs2_data_mem),
 	//MEM/WB resigsters
 	.mem_wb(mem_wb),
 	.alu_wb(alu_wb),
@@ -262,14 +268,7 @@ mem mem(
 );
 
 
-dmem dmem(
-	.clk(clk), 
-	.mem_addr(alu_mem), 
-	.mem_write_data(rs2_data_mem), 
-	.mem_read_data(mem_data), 
-	.write_en(mem_wr_mem), 
-	.mem_en(mem_en_mem)
-);
+//
 
 wb wb(
 	.clk(clk),
@@ -281,15 +280,5 @@ wb wb(
 	//Control signals
 	.wb_sel(wb_sel_wb)
 );
-
-initial 
-begin
-	debug <= '0;
-end
-
-always_ff@(posedge clk)
-begin
-	debug <= debug + 1;
-end
 
 endmodule

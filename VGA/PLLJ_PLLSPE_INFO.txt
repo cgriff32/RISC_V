@@ -1,0 +1,5 @@
+PLL_Name	VgaAdapter:inst|VgaPll:comb_3|altpll:altpll_component|pll
+PLLJITTER	30
+PLLSPEmax	84
+PLLSPEmin	-53
+

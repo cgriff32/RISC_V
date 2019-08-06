@@ -26,7 +26,7 @@ logic br_true;
 reg [ADDR_WIDTH-1:0] wr_pointer;
 reg [ADDR_WIDTH-1:0] rd_pointer;
 reg [ADDR_WIDTH-1:0] status_cnt;
-logic [`REG_ADDR_WIDTH-1:0] temp1, temp2;
+logic [`THREAD_WIDTH-1:0] temp1, temp2;
 wire [DATA_WIDTH-1:0] data_in_0 ;
 wire [DATA_WIDTH-1:0] data_in_1 ;
 wire [DATA_WIDTH-1:0] data_out_0 ;
@@ -175,12 +175,14 @@ end
 assign br_fifo_t.wr_en = (br_i.issue_en && !br_o.full);
 assign br_fifo_t.data_in = ({2'b00,br_i.issue_thread_id,`XLEN'b0}); 
 
+
+assign temp1 = (rd_pointer == wr_pointer) ? br_i.issue_thread_id : br_o.thread_id;
 assign br_fifo_t.up_en = (br_reg.busy && br_reg.v1_rdy && br_reg.v2_rdy && !br_o.full);
-assign br_fifo_t.data_update = ({1'b1, br_true, br_o.thread_id, pc_n});
+assign br_fifo_t.data_update = ({1'b1, br_true, temp1, pc_n});
 
 assign br_fifo_t.rd_en = (!br_o.empty) && (br_i.pc_ack);
 
-  rob_ram #(DATA_WIDTH, ADDR_WIDTH) br_fifo(
+  br_ram #(DATA_WIDTH, ADDR_WIDTH) br_fifo(
      .clk(clk),
      .reset(rst),
      

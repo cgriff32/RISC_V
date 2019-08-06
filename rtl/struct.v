@@ -26,7 +26,7 @@ typedef struct packed
 {
   reg [`XLEN-1:0] pc;
   reg [`THREAD_WIDTH-1:0] thread_id;
-  logic instr_stall;
+  reg instr_stall;
   
   logic br_ack;
 } pc_out;

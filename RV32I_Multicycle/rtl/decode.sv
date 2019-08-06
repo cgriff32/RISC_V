@@ -4,6 +4,7 @@
 module decode(
 	
 	input clk,
+	input rst,
 	
 	//Data pipeline
 	//From IF/ID
@@ -63,6 +64,7 @@ wire [`XLEN-1:0] imm_br = {{20{instr_decode[31]}}, instr_decode[7], instr_decode
 
 regfile regfile(
 	clk,  
+	rst,
 	rd_addr, 
 	rd_data, 
 	rs1_addr, 
@@ -78,18 +80,6 @@ branch_comp branch_comp(
 	br_op,
 	br_true
 );
-
-initial
-begin
-	pc_exe <= `XLEN'b0;
-	instr_exe<= `XLEN'b0;
-	rs1_data_exe <= `XLEN'b0;
-	rs2_data_exe <= `XLEN'b0;
-	imm_exe <= `XLEN'b0;
-	rs1_addr_exe <= `XLEN'b0;
-	rs2_addr_exe <= `XLEN'b0;
-	rd_addr_exe <= `XLEN'b0;
-end
 
 always_comb
 begin
@@ -123,40 +113,51 @@ assign jalr_decode= rs1_data + imm_jalr;
 assign jal_decode= pc_decode + imm_jal;
 assign br_decode= pc_decode + imm_br;
 
-always_ff @(posedge clk)
+always_ff @(posedge clk, negedge rst)
 begin
-	
-	if (flush_id)
-    begin
-		
+	if(!rst)
+	begin
 		pc_exe <= '0;
 		instr_exe <= '0;
-		imm_exe <= '0;
-		
 		rs1_data_exe <= '0;
 		rs2_data_exe <= '0;
-		
+		imm_exe <= '0;
 		rs1_addr_exe <= '0;
 		rs2_addr_exe <= '0;
 		rd_addr_exe <= '0;
-		
 	end
 	else
 	begin
-		
-		pc_exe <= pc_decode;
-		instr_exe <= instr_decode;
-		imm_exe <= imm_wire;
-		
-		rs1_data_exe <= ((rd_addr == rs1_addr) && reg_write_en) ? rd_data : rs1_data;
-		rs2_data_exe <= ((rd_addr == rs2_addr) && reg_write_en) ? rd_data : rs2_data;
-		
-		rs1_addr_exe <= rs1_addr;
-		rs2_addr_exe <= rs2_addr;
-		rd_addr_exe <= instr_decode[11:7];
-		
+		if (flush_id)
+		 begin
+			
+			pc_exe <= '0;
+			instr_exe <= '0;
+			imm_exe <= '0;
+			
+			rs1_data_exe <= '0;
+			rs2_data_exe <= '0;
+			
+			rs1_addr_exe <= '0;
+			rs2_addr_exe <= '0;
+			rd_addr_exe <= '0;
+			
+		end
+		else
+		begin
+			
+			pc_exe <= pc_decode;
+			instr_exe <= instr_decode;
+			imm_exe <= imm_wire;
+			
+			rs1_data_exe <= ((rd_addr == rs1_addr) && reg_write_en) ? rd_data : rs1_data;
+			rs2_data_exe <= ((rd_addr == rs2_addr) && reg_write_en) ? rd_data : rs2_data;
+			
+			rs1_addr_exe <= rs1_addr;
+			rs2_addr_exe <= rs2_addr;
+			rd_addr_exe <= instr_decode[11:7];
+		end
 	end
-	
 end
 
 endmodule

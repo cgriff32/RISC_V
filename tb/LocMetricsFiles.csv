@@ -1,0 +1,13 @@
+File,LOC,SLOC-P,SLOC-L,MVG,BLOC,C&SLOC,CLOC,CWORD,HCLOC,HCWORD
+E:\Thesis\RISCV\RISC_V\tb\all_tb.sv,332,267,174,0,62,1,3,12,0,0
+E:\Thesis\RISCV\RISC_V\tb\alu_tb.sv,88,62,44,0,24,2,2,9,0,0
+E:\Thesis\RISCV\RISC_V\tb\br_tb.sv,153,118,96,0,33,1,2,11,0,0
+E:\Thesis\RISCV\RISC_V\tb\cdb_tb.sv,66,45,29,0,20,2,1,8,0,0
+E:\Thesis\RISCV\RISC_V\tb\decode_tb.sv,103,72,53,0,27,1,4,13,0,0
+E:\Thesis\RISCV\RISC_V\tb\instr_tb.sv,88,66,47,0,21,0,1,1,0,0
+E:\Thesis\RISCV\RISC_V\tb\issue_tb.sv,233,158,139,0,47,1,28,70,0,0
+E:\Thesis\RISCV\RISC_V\tb\pc_tb.sv,78,55,36,0,22,0,1,1,0,0
+E:\Thesis\RISCV\RISC_V\tb\prod_tb.sv,93,65,40,0,26,1,2,8,0,0
+E:\Thesis\RISCV\RISC_V\tb\reg_tb.sv,79,53,33,0,24,1,2,8,0,0
+E:\Thesis\RISCV\RISC_V\tb\rob_tb.sv,125,91,72,0,32,5,2,12,0,0
+E:\Thesis\RISCV\RISC_V\tb\rs_tb.sv,137,102,81,0,34,1,1,5,0,0

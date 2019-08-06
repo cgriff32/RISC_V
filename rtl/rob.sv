@@ -93,7 +93,7 @@ rob_ram #(DATA_WIDTH, ADDR_WIDTH) rob_ram(
      
      .wr_en_1(rob_i.cdb_valid && !stall_i), //cdb_valid (update from cdb)
      .addr_in_1(rob_i.cdb_tag),
-     .data_in_1({rob_i.cdb_valid, rob_i.cdb_value, `REG_ADDR_WIDTH'bz}),
+     .data_in_1({rob_i.cdb_valid, rob_i.cdb_value, `REG_ADDR_WIDTH'b0}),
      
      .o_en_0(1'b1 && !stall_i), //to reg (head_en)
      .addr_out_0(rd_pointer),

@@ -5,6 +5,7 @@
 module fetch(
 	
 	input clk,
+	input rst,
 	
 	//IF/ID registers
 	output reg [`REG_DATA_WIDTH-1:0] pc_decode,
@@ -29,12 +30,6 @@ reg [`REG_DATA_WIDTH-1:0] pc = `XLEN'b0;
 wire [`REG_DATA_WIDTH-1:0] instr;
 logic [`XLEN-1:0] pc_wire;
 
-initial
-begin
-    pc_decode <= '0;
-    instr_decode <= '0;
-end
-
 assign pc_imem = pc;
 
 always_comb
@@ -49,27 +44,34 @@ begin
 	
 end
 
-always_ff @(posedge clk)
+always_ff @(posedge clk, negedge rst)
 begin
-	
-	if(stall_if)
-	begin
-		pc_decode <= pc_decode;
-		pc <= pc;
-	end
-	else if(flush_if)
+	if(!rst)
 	begin
 		pc_decode <= '0;
-		pc  <= pc_wire;
-		instr_decode<= '0;
+		instr_decode <= '0;
+		pc <= '0;
 	end
-	else 
+	else
 	begin
-		pc_decode <= pc;//pc to decode stage
-		pc  <= pc_wire;
-		instr_decode <= instr_imem;//instr to decode stage
+		if(stall_if)
+		begin
+			pc_decode <= pc_decode;
+			pc <= pc;
+		end
+		else if(flush_if)
+		begin
+			pc_decode <= '0;
+			pc  <= pc_wire;
+			instr_decode<= '0;
+		end
+		else 
+		begin
+			pc_decode <= pc;//pc to decode stage
+			pc  <= pc_wire;
+			instr_decode <= instr_imem;//instr to decode stage
+		end
 	end
-	
 end
 
 endmodule
