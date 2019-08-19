@@ -20,6 +20,10 @@ module execute(
 	output reg [`REG_DATA_WIDTH-1:0] rs2_mem,
 	output reg [`REG_DATA_WIDTH-1:0] instr_mem,
 	
+	//Data memory signals
+	output [`DMEM_WIDTH-1:0] dmem_addr,
+	output [`XLEN-1:0] dmem_data,
+	
 	//Control pipelin
 	//From ID/EXE
 	input [`A_SEL_WIDTH-1:0] a_sel,
@@ -37,8 +41,12 @@ module execute(
 
 logic [`XLEN-1:0] alu_a;
 logic [`XLEN-1:0] alu_b;
+logic [`XLEN-1:0] forward_a;
 logic [`XLEN-1:0] forward_b;
 logic [`XLEN-1:0] alu_out;
+
+assign dmem_addr = alu_out[`DMEM_WIDTH+1:2];
+assign dmem_data = forward_b;
 
 alu alu(
 	alu_a, 
@@ -49,20 +57,20 @@ alu alu(
 
 always_comb
 begin
-	case(forward_a_sel)
-		`FORWARD_SEL_EXE : 
-		begin
-			case(a_sel)
-				`A_SEL_RS1 : alu_a = rs1_exe;
+  
+  	case(forward_a_sel)
+	  `FORWARD_SEL_EXE : forward_a = rs1_exe;
+	  	`FORWARD_SEL_MEM : forward_a = forward_mem;
+		`FORWARD_SEL_WB : forward_a = forward_wb;
+		default : forward_a = rs1_exe;
+	endcase
+	
+	case(a_sel)
+				`A_SEL_RS1 : alu_a = forward_a;
 				`A_SEL_PC : alu_a = pc_exe;
 				`A_SEL_ZERO : alu_a = `XLEN'b0;
 				default : alu_a = `XLEN'b0;
 			endcase
-		end
-		`FORWARD_SEL_MEM : alu_a = forward_mem;
-		`FORWARD_SEL_WB : alu_a = forward_wb;
-		default : alu_a = `XLEN'b0;
-	endcase
 	
 	case(forward_b_sel)
 		`FORWARD_SEL_EXE : forward_b = rs2_exe;

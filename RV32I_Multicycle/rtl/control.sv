@@ -28,10 +28,13 @@ module control(
 	output reg [`ALU_OP_WIDTH-1:0] alu_sel_exe,
 	
 	//EX/MEM registers
-	output reg mem_wr_mem,
+	output reg  mem_wr_mem,
 	output reg mem_en_mem,
-	output reg [3:0] mem_byte_mem,
 	
+	//DMEM control
+	output rden_dmem,
+	output wren_dmem,
+	output logic [3:0] mem_byte_mem,
 	//MEM/WB registers
 	output reg [`WB_SEL_WIDTH-1:0] wb_sel_wb,
 	output reg reg_en_wb,
@@ -57,8 +60,10 @@ module control(
 	output logic [`FORWARD_SEL_WIDTH-1:0] forward_a_sel,
 	output logic [`FORWARD_SEL_WIDTH-1:0] forward_b_sel,
 	
-		//Forwarding control (Decode)
-		output logic [`FORWARD_SEL_WIDTH-1:0] branch_a_sel,
+	
+	//Forwarding control (Decode)
+	
+	output logic [`FORWARD_SEL_WIDTH-1:0] branch_a_sel,
 	output logic [`FORWARD_SEL_WIDTH-1:0] branch_b_sel
 	
 );
@@ -91,7 +96,7 @@ logic check_rs1_wire;
 logic check_rs2_wire;
 logic mem_wr_wire;
 logic mem_en_wire;
-logic mem_byte_wire;
+logic [3:0] mem_byte_wire;
 logic [`WB_SEL_WIDTH-1:0] wb_sel_wire;
 logic reg_en_wire;
 
@@ -120,9 +125,9 @@ begin
 	br_op = `ALU_OP_SEQ;
 	jal_taken = '0;
 	jalr_taken = '0;
-	mem_wr_wire = `MEMRW_SEL_WRITE;
+	mem_wr_wire = `MEMRW_SEL_READ;
 	mem_en_wire = '0;
-	mem_byte_wire = '0;
+	mem_byte_wire = 4'b1111;
 	wb_sel_wire = `WB_SEL_ALU;
 	reg_en_wire = '0;
 	check_rs1_wire = '1;
@@ -187,12 +192,12 @@ begin
 			mem_en_wire = 1'b1;
 			reg_en_wire = 1'b1;
 			wb_sel_wire = `WB_SEL_MEM;
-			case (funct3)
-				3'b000 : mem_byte_wire = 4'b0001;
-				3'b001 : mem_byte_wire = 4'b0011;
-				3'b010 : mem_byte_wire = 4'b1111;
-				default : mem_byte_wire = 4'b1111;
-			endcase
+			//case (funct3)
+//				3'b000 : mem_byte_wire = 4'b1111;
+//				3'b001 : mem_byte_wire = 4'b1111;
+//				3'b010 : mem_byte_wire = 4'b1111;
+//				default : mem_byte_wire = 4'b1111;
+//			endcase
 		end
 		
 		`OP_STORE : 
@@ -201,12 +206,12 @@ begin
 			mem_wr_wire = `MEMRW_SEL_WRITE;
 			mem_en_wire = 1'b1;
 			check_rs2_wire = '1;
-			case (funct3)
-				3'b000 : mem_byte_wire = 4'b0001;
-				3'b001 : mem_byte_wire = 4'b0011;
-				3'b010 : mem_byte_wire = 4'b1111;
-				default : mem_byte_wire = 4'b1111;
-			endcase
+//			case (funct3)
+//				3'b000 : mem_byte_wire = 4'b1111;
+//				3'b001 : mem_byte_wire = 4'b1111;
+//				3'b010 : mem_byte_wire = 4'b1111;
+//				default : mem_byte_wire = 4'b1111;
+//			endcase
 		end
 		
 		`OP_IMM : 
@@ -226,6 +231,7 @@ begin
 		`ECALL :
 		begin
 			led_t = 1;
+			illegal_instr = 1'b1; //stall
 		end
 		
 		default : illegal_instr = 1'b1; //stall
@@ -250,6 +256,7 @@ end
 //Forward and Hazard detection
 always_comb
 begin
+
 	//Forward control for ALU
 	if (
 		(check_rs1_exe) &&
@@ -263,7 +270,7 @@ begin
 		(check_rs1_exe) &&
 		(reg_en_wb) &&
 		(rd_addr_wb != 0) &&
-		(!(reg_en_mem && (rd_addr_mem != 0) && (rd_addr_mem == rs1_addr_exe))) &&
+		//(!(reg_en_mem && (rd_addr_mem != 0) && (rd_addr_mem == rs1_addr_exe))) &&
 		(rd_addr_wb == rs1_addr_exe)
 	)
 	
@@ -292,7 +299,7 @@ begin
 	forward_b_sel = `FORWARD_SEL_EXE;
 	
 	//Forward control for branch detection
-	if (
+	if(
 		(reg_en_mem) &&
 		(rd_addr_mem != 0) &&
 		(rd_addr_mem == rs1_addr_decode)
@@ -328,7 +335,7 @@ begin
 	
 	//Hazard Detection
 	if (
-		((opcode == `OP_BRANCH) || (mem_wr_exe == `MEMRW_SEL_READ)) &&
+		((opcode == `OP_BRANCH) && (reg_en_exe)) &&
 		(((rs1_addr_decode) && (rd_addr_exe == rs1_addr_decode)) ||
 		((rs2_addr_decode) && (rd_addr_exe == rs2_addr_decode)))
 	)
@@ -337,9 +344,38 @@ begin
 		flush_id  = 1'b1;
 		detect_hazard = 1'b1;
 	end
-	else
+	else if (
+	  ((opcode == `OP_JALR) && (reg_en_exe)) &&
+	  ((rs1_addr_decode) && (rd_addr_exe == rs1_addr_decode))
+	)
 	begin
-		stall_if = 1'b0;
+	 	stall_if =(1'b1);
+		flush_id  = 1'b1;
+		detect_hazard = 1'b1; 
+  end
+	else	if (
+		((mem_wr_exe == `MEMRW_SEL_READ) && (mem_en_exe)) &&
+		(((rs1_addr_decode) && (rd_addr_exe == rs1_addr_decode)) ||
+		((rs2_addr_decode) && (rd_addr_exe == rs2_addr_decode)))
+	)
+	begin
+	 	stall_if =(1'b1);
+		flush_id  = 1'b1;
+		detect_hazard = 1'b1; 
+  end
+  else if(
+		((mem_wr_mem == `MEMRW_SEL_READ) && (mem_en_mem)) &&
+		(((rs1_addr_decode) && (rd_addr_mem == rs1_addr_decode)) ||
+		((rs2_addr_decode) && (rd_addr_mem == rs2_addr_decode)))
+		)
+	begin
+	 	stall_if =(1'b1);
+		flush_id  = 1'b1;
+		detect_hazard = 1'b1; 
+  end
+  else
+  begin
+	  stall_if = 1'b0;
 		flush_id = 1'b0;
 		detect_hazard = 1'b0;
 	end
@@ -350,9 +386,13 @@ end
 always_comb
 begin
 	flush_if = 1'b1;
+	pc_sel = '0;
 	
 	if (br_taken)
+	  begin
 	pc_sel = `PC_SEL_BRANCH;
+	flush_if = 1'b0;
+	end
 	else if (jal_taken)
 	pc_sel = `PC_SEL_JAL;
 	else if (jalr_taken)
@@ -364,9 +404,13 @@ begin
 	end
 end
 
+assign wren_dmem = mem_wr_exe;
+assign rden_dmem = mem_en_exe;
+assign mem_byte_mem = mem_byte_exe;
+
 always_ff @(posedge clk, negedge rst)
 begin
-	if(!rst)
+	if((!rst))
 	begin
 		wb_sel_mem <= '0;
 		reg_en_mem <= '0;
@@ -374,6 +418,7 @@ begin
 		check_rs2_exe <= '0;
 		mem_wr_exe <= '0;
 		mem_en_exe <= '0;
+		mem_byte_exe <= '0;
 		wb_sel_exe <= '0;
 		reg_en_exe <= '0;
 		b_sel_exe <= '0; 
@@ -386,23 +431,52 @@ begin
 		led <= 0;
 	end
 	else
+	  
+	  
+	  
 	begin
-		case(detect_hazard)
-			1'b1: begin
-				
+//		if (illegal_instr)
+//			begin
+//				wb_sel_mem <= '0;
+//				reg_en_mem <= '0;
+//				check_rs1_exe <= '0;
+//				check_rs2_exe <= '0;
+//				mem_wr_exe <= '0;
+//				mem_en_exe <= '0;
+//				wb_sel_exe <= '0;
+//				reg_en_exe <= '0;
+//				b_sel_exe <= '0; 
+//				a_sel_exe <= '0; 
+//				alu_sel_exe <= '0;
+//				mem_wr_mem <= '0;
+//				mem_en_mem <= '0;
+//				wb_sel_wb <= '0;
+//				reg_en_wb <= '0;
+	//	end
+//		else
+//		begin
+		  
+		  		mem_en_mem <= mem_en_exe;
+		    mem_wr_mem <= mem_wr_exe;
+		    wb_sel_mem <= wb_sel_exe;
+		    wb_sel_wb  <= wb_sel_mem;
+		    reg_en_mem <= reg_en_exe;
+		    reg_en_wb  <= reg_en_mem;
+		if(detect_hazard)
+		  begin
 				a_sel_exe<= `A_SEL_RS1;
 				b_sel_exe<= `B_SEL_IMM;
 				alu_sel_exe<= `ALU_OP_ADD;
 				mem_wr_exe <= '0;
 				mem_en_exe <= '0;
-				mem_byte_exe <= '0;
+				mem_byte_exe <= '1;
 				wb_sel_exe<= `WB_SEL_ALU;
 				reg_en_exe<= '0;
 				check_rs1_exe <= '1;
 				check_rs2_exe <= '0;
 			end
-			1'b0: begin
-				
+			else
+			  begin
 				a_sel_exe <= a_sel_wire;
 				b_sel_exe <= b_sel_wire;
 				alu_sel_exe <= alu_sel_wire;
@@ -412,22 +486,11 @@ begin
 				wb_sel_exe<= wb_sel_wire;
 				reg_en_exe<= reg_en_wire;
 				check_rs1_exe <= check_rs1_wire;
-				check_rs2_exe <= check_rs2_wire;
-				
+				check_rs2_exe <= check_rs2_wire;	
 			end
-		endcase
+			led <= led_t;
+		end
 		
-		mem_en_mem <= mem_en_exe;
-		mem_wr_mem <= mem_wr_exe;
-		mem_byte_mem <= mem_byte_exe;
-		
-		wb_sel_mem <= wb_sel_exe;
-		wb_sel_wb  <= wb_sel_mem;
-		
-		reg_en_mem <= reg_en_exe;
-		reg_en_wb  <= reg_en_mem;
-		led <= led_t;
 	end
-end
 
 endmodule

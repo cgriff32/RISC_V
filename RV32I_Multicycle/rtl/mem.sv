@@ -17,7 +17,7 @@ module mem(
 	output reg [`XLEN-1:0] instr_wb,
 	
 	//Data memory signals
-	input [`XLEN-1:0] mem_data,
+	input [`XLEN-1:0] dmem_data,
 	
 	//Control signals
 	input mem_wr,
@@ -42,7 +42,7 @@ begin
 		instr_wb <= instr_mem;
 		rd_addr_wb <= rd_addr_mem;
 		alu_wb <= alu_mem;
-		mem_wb <= mem_data;
+		mem_wb <= dmem_data;
 	end
 end
 

@@ -45,8 +45,8 @@ module dmem (
 	q_a,
 	q_b);
 
-	input	[9:0]  address_a;
-	input	[9:0]  address_b;
+	input	[10:0]  address_a;
+	input	[10:0]  address_b;
 	input	[3:0]  byteena_a;
 	input	  clock;
 	input	[31:0]  data_a;
@@ -105,9 +105,9 @@ endmodule
 // Retrieval info: PRIVATE: JTAG_ENABLED NUMERIC "0"
 // Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
-// Retrieval info: PRIVATE: MEMSIZE NUMERIC "32768"
+// Retrieval info: PRIVATE: MEMSIZE NUMERIC "65536"
 // Retrieval info: PRIVATE: MEM_IN_BITS NUMERIC "0"
-// Retrieval info: PRIVATE: MIFfilename STRING "../../RISCV/RISC_V/RV32I_Multicycle/rtl/image.mif"
+// Retrieval info: PRIVATE: MIFfilename STRING "../../RISCV/RISC_V/RV32I_Multicycle/rtl/dmem/binary/core1_image.mif"
 // Retrieval info: PRIVATE: OPERATION_MODE NUMERIC "3"
 // Retrieval info: PRIVATE: OUTDATA_ACLR_B NUMERIC "0"
 // Retrieval info: PRIVATE: OUTDATA_REG_B NUMERIC "0"
@@ -142,12 +142,12 @@ endmodule
 // Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_A STRING "BYPASS"
 // Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_B STRING "BYPASS"
 // Retrieval info: CONSTANT: INDATA_REG_B STRING "CLOCK0"
-// Retrieval info: CONSTANT: INIT_FILE STRING "../../RISCV/RISC_V/RV32I_Multicycle/rtl/image.mif"
+// Retrieval info: CONSTANT: INIT_FILE STRING "../../RISCV/RISC_V/RV32I_Multicycle/rtl/dmem/binary/core1_image.mif"
 // Retrieval info: CONSTANT: INIT_FILE_LAYOUT STRING "PORT_A"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
-// Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "1024"
-// Retrieval info: CONSTANT: NUMWORDS_B NUMERIC "1024"
+// Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "2048"
+// Retrieval info: CONSTANT: NUMWORDS_B NUMERIC "2048"
 // Retrieval info: CONSTANT: OPERATION_MODE STRING "BIDIR_DUAL_PORT"
 // Retrieval info: CONSTANT: OUTDATA_ACLR_A STRING "NONE"
 // Retrieval info: CONSTANT: OUTDATA_ACLR_B STRING "NONE"
@@ -158,15 +158,15 @@ endmodule
 // Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_MIXED_PORTS STRING "DONT_CARE"
 // Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_A STRING "NEW_DATA_NO_NBE_READ"
 // Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_B STRING "NEW_DATA_NO_NBE_READ"
-// Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "10"
-// Retrieval info: CONSTANT: WIDTHAD_B NUMERIC "10"
+// Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "11"
+// Retrieval info: CONSTANT: WIDTHAD_B NUMERIC "11"
 // Retrieval info: CONSTANT: WIDTH_A NUMERIC "32"
 // Retrieval info: CONSTANT: WIDTH_B NUMERIC "32"
 // Retrieval info: CONSTANT: WIDTH_BYTEENA_A NUMERIC "4"
 // Retrieval info: CONSTANT: WIDTH_BYTEENA_B NUMERIC "1"
 // Retrieval info: CONSTANT: WRCONTROL_WRADDRESS_REG_B STRING "CLOCK0"
-// Retrieval info: USED_PORT: address_a 0 0 10 0 INPUT NODEFVAL "address_a[9..0]"
-// Retrieval info: USED_PORT: address_b 0 0 10 0 INPUT NODEFVAL "address_b[9..0]"
+// Retrieval info: USED_PORT: address_a 0 0 11 0 INPUT NODEFVAL "address_a[10..0]"
+// Retrieval info: USED_PORT: address_b 0 0 11 0 INPUT NODEFVAL "address_b[10..0]"
 // Retrieval info: USED_PORT: byteena_a 0 0 4 0 INPUT VCC "byteena_a[3..0]"
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT VCC "clock"
 // Retrieval info: USED_PORT: data_a 0 0 32 0 INPUT NODEFVAL "data_a[31..0]"
@@ -177,8 +177,8 @@ endmodule
 // Retrieval info: USED_PORT: rden_b 0 0 0 0 INPUT VCC "rden_b"
 // Retrieval info: USED_PORT: wren_a 0 0 0 0 INPUT GND "wren_a"
 // Retrieval info: USED_PORT: wren_b 0 0 0 0 INPUT GND "wren_b"
-// Retrieval info: CONNECT: @address_a 0 0 10 0 address_a 0 0 10 0
-// Retrieval info: CONNECT: @address_b 0 0 10 0 address_b 0 0 10 0
+// Retrieval info: CONNECT: @address_a 0 0 11 0 address_a 0 0 11 0
+// Retrieval info: CONNECT: @address_b 0 0 11 0 address_b 0 0 11 0
 // Retrieval info: CONNECT: @byteena_a 0 0 4 0 byteena_a 0 0 4 0
 // Retrieval info: CONNECT: @clock0 0 0 0 0 clock 0 0 0 0
 // Retrieval info: CONNECT: @data_a 0 0 32 0 data_a 0 0 32 0
@@ -190,9 +190,9 @@ endmodule
 // Retrieval info: CONNECT: q_a 0 0 32 0 @q_a 0 0 32 0
 // Retrieval info: CONNECT: q_b 0 0 32 0 @q_b 0 0 32 0
 // Retrieval info: GEN_FILE: TYPE_NORMAL dmem.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL dmem.inc TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL dmem.cmp TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL dmem.bsf TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL dmem.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL dmem.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL dmem.bsf FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL dmem_inst.v TRUE
 // Retrieval info: GEN_FILE: TYPE_NORMAL dmem_bb.v TRUE
 // Retrieval info: LIB_FILE: altera_mf

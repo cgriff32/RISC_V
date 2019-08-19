@@ -3,24 +3,30 @@
 
 
 `include "constants.vh"
-module riscv_multicycle(
+module RISCV_Multicycle(
 	input clk,
 	input rst,
-	output [9:0] pc_imem,
-	input [`XLEN-1:0] instr_imem,
+
 	
 
 	//To Mem
-	output [9:0] addr_mem,
-	output [`XLEN-1:0] data_in_mem,
-	input [`XLEN-1:0] data_out_mem,
-	output [`MEMRW_SEL_WIDTH-1:0] mem_wr_mem,
-	output [`MEMRW_SEL_WIDTH-1:0] mem_en_mem,
-	output [3:0] mem_byte_mem
+	output [`DMEM_WIDTH-1:0] dmem_addr,
+	output [`XLEN-1:0] dmem_data_in,
+	
+	output  rden_dmem,
+	output  wren_dmem,
+	output [3:0] mem_byte_mem,
+	input [`XLEN-1:0] dmem_data_out,
+	
+	
+	output [`IMEM_WIDTH-1:0] pc_imem,
+	input [`XLEN-1:0] imem_data_out,
+	output rden_imem,
+	
+	output led 
 	
 );
 
-parameter mod_num = 1;
 
 //Pipeline registers
 //Fetch/Decode
@@ -46,6 +52,8 @@ logic [`XLEN-1:0] mem_wb;
 logic [`XLEN-1:0] alu_wb;
 logic [`XLEN-1:0] reg_wb;
 logic [`XLEN-1:0] instr_wb;
+logic mem_wr_mem;
+logic mem_en_mem;
 
 //Branch signals
 //From Decode
@@ -70,8 +78,6 @@ logic [`IMM_SEL_WIDTH-1:0] imm_sel;
 logic [`B_SEL_WIDTH-1:0] b_sel_exe; 
 logic [`A_SEL_WIDTH-1:0] a_sel_exe; 
 logic [`ALU_OP_WIDTH-1:0] alu_sel_exe; 
-
-
 
 //To WB
 logic [`WB_SEL_WIDTH-1:0] wb_sel_wb;
@@ -104,6 +110,7 @@ logic [`FORWARD_SEL_WIDTH-1:0] branch_b_sel;
 logic [`FORWARD_SEL_WIDTH-1:0] forward_a_sel;
 logic [`FORWARD_SEL_WIDTH-1:0] forward_b_sel;
 
+logic temp;
 
 
 control control(
@@ -128,6 +135,8 @@ control control(
 	.mem_wr_mem(mem_wr_mem),
 	.mem_en_mem(mem_en_mem),
 	.mem_byte_mem(mem_byte_mem),
+	.rden_dmem(rden_dmem),
+	.wren_dmem(wren_dmem),
 	//MEM/WB registers
 	.wb_sel_wb(wb_sel_wb),
 	.reg_en_wb(reg_en_wb),
@@ -153,6 +162,8 @@ control control(
 	.branch_b_sel(branch_b_sel)
 );
 
+
+
 fetch fetch(
 	.clk(clk),
 	.rst(rst),
@@ -162,7 +173,8 @@ fetch fetch(
 	.instr_decode(instr_decode), 
 	//Instruction memory signals
 	.pc_imem(pc_imem),
-	.instr_imem(instr_imem),
+	.instr_imem(imem_data_out),
+	.rden_imem(temp),
 	//Control signals
 	//From Decode
 	.pc_sel(pc_sel),
@@ -173,6 +185,8 @@ fetch fetch(
 	.flush_if(flush_if),
 	.stall_if(stall_if)
 );
+
+assign rden_imem = temp;
 
 decode decode(
 	.clk(clk),
@@ -227,6 +241,9 @@ execute execute(
 	.alu_mem(alu_mem),
 	.rs2_mem(rs2_data_mem),
 	.instr_mem(instr_mem),
+	//Data memory signals
+	.dmem_addr(dmem_addr),
+	.dmem_data(dmem_data_in),
 	//Control pipeline
 	//From ID/EXE
 	.a_sel(a_sel_exe),
@@ -241,10 +258,6 @@ execute execute(
 	.forward_wb(reg_wb)
 );
 
-assign addr_mem = alu_mem[9:0];
-assign data_in_mem =  rs2_data_mem;
-assign mem_data = data_out_mem;
-
 mem mem(
 	.clk(clk),
 	.rst(rst),
@@ -257,7 +270,7 @@ mem mem(
 	.alu_wb(alu_wb),
 	.instr_wb(instr_wb),
 	//Data memory signals
-	.mem_data(mem_data),
+	.dmem_data(dmem_data_out),
 	//Control pipeline
 	//From EXE/MEM
 	.mem_wr(mem_wr_mem),
@@ -266,9 +279,6 @@ mem mem(
 	.rd_addr_mem(rd_addr_mem),
 	.rd_addr_wb(rd_addr_wb)
 );
-
-
-//
 
 wb wb(
 	.clk(clk),

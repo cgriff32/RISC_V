@@ -18,7 +18,8 @@
 initialLoad:
 	nop
 
-	addi x21, x0, 72
+	addi x21, x0, 72 ##uncomment for synth
+	## addi x21, x0, 1024 ##uncomment for sim
 	addi x23, x0, 1755
 	addi x24, x21, 1920
 	addi x19, x21, 1920
@@ -121,7 +122,7 @@ pixelToArray: #(Handles adding full pixel stored in register to array)
 	nop
 	
 arrayOverflow: #(after adding 9th pixel to array, move back to base array address)
-	addi x24, x19, 0
+	addi x24, x0, 0
 	j .Loop1
 	nop
 	
@@ -250,8 +251,8 @@ copyArray: ##copy of array for quicksort alg
 .copyLoop:
 	add x8, x19, x9
 	lw x11, 0(x8)
-	add x7, x8, x7
-	sw x11, 0(x7)
+	add x8, x8, x7
+	sw x11, 0(x8)
 	addi x9, x9, 4
 	blt x9, x7, .copyLoop
 	nop

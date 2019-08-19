@@ -52,6 +52,8 @@ wire [`REG_ADDR_WIDTH-1:0] rd_addr = instr_wb[11:7];
 
 wire [`XLEN-1:0] rs1_data;
 wire [`XLEN-1:0] rs2_data;
+wire [`XLEN-1:0] rs1_temp;
+wire [`XLEN-1:0] rs2_temp;
 wire [`XLEN-1:0] rd_data = mem_wb; 
 logic [`XLEN-1:0] imm_wire;
 
@@ -150,8 +152,8 @@ begin
 			instr_exe <= instr_decode;
 			imm_exe <= imm_wire;
 			
-			rs1_data_exe <= ((rd_addr == rs1_addr) && reg_write_en) ? rd_data : rs1_data;
-			rs2_data_exe <= ((rd_addr == rs2_addr) && reg_write_en) ? rd_data : rs2_data;
+			rs1_data_exe <= (|(rs1_addr)) ? rs1_temp : '0;
+			rs2_data_exe <= (|(rs2_addr)) ? rs2_temp : '0;
 			
 			rs1_addr_exe <= rs1_addr;
 			rs2_addr_exe <= rs2_addr;
@@ -159,5 +161,7 @@ begin
 		end
 	end
 end
+assign rs1_temp = ((rd_addr == rs1_addr) && reg_write_en) ? rd_data : rs1_data;
+assign rs2_temp = ((rd_addr == rs2_addr) && reg_write_en) ? rd_data : rs2_data;
 
 endmodule

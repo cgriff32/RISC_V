@@ -34,20 +34,23 @@
 
 
 // synopsys translate_off
-`timescale 1 ps / 1 ps
+`timescale 1 ns / 1 ns
 // synopsys translate_on
 module imem (
 	address,
 	clock,
+	rden,
 	q);
 
 	input	[9:0]  address;
 	input	  clock;
+	input	  rden;
 	output	[31:0]  q;
 `ifndef ALTERA_RESERVED_QIS
 // synopsys translate_off
 `endif
 	tri1	  clock;
+	tri1	  rden;
 `ifndef ALTERA_RESERVED_QIS
 // synopsys translate_on
 `endif
@@ -58,6 +61,7 @@ module imem (
 	altsyncram	altsyncram_component (
 				.address_a (address),
 				.clock0 (clock),
+				.rden_a (rden),
 				.q_a (sub_wire0),
 				.aclr0 (1'b0),
 				.aclr1 (1'b0),
@@ -75,7 +79,6 @@ module imem (
 				.data_b (1'b1),
 				.eccstatus (),
 				.q_b (),
-				.rden_a (1'b1),
 				.rden_b (1'b1),
 				.wren_a (1'b0),
 				.wren_b (1'b0));
@@ -83,7 +86,7 @@ module imem (
 		altsyncram_component.address_aclr_a = "NONE",
 		altsyncram_component.clock_enable_input_a = "BYPASS",
 		altsyncram_component.clock_enable_output_a = "BYPASS",
-		altsyncram_component.init_file = "./binary/bin_1.mif",
+		altsyncram_component.init_file = "../../RISCV/RISC_V/RV32I_Multicycle/rtl/imem/binary/bin_1.mif",
 		altsyncram_component.intended_device_family = "Cyclone IV E",
 		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
 		altsyncram_component.lpm_type = "altsyncram",
@@ -119,7 +122,7 @@ endmodule
 // Retrieval info: PRIVATE: JTAG_ENABLED NUMERIC "0"
 // Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
-// Retrieval info: PRIVATE: MIFfilename STRING "./binary/bin_1.mif"
+// Retrieval info: PRIVATE: MIFfilename STRING "../imem/binary/bin_1.mif"
 // Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "1024"
 // Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "2"
 // Retrieval info: PRIVATE: RegAddr NUMERIC "1"
@@ -129,12 +132,12 @@ endmodule
 // Retrieval info: PRIVATE: UseDQRAM NUMERIC "0"
 // Retrieval info: PRIVATE: WidthAddr NUMERIC "10"
 // Retrieval info: PRIVATE: WidthData NUMERIC "32"
-// Retrieval info: PRIVATE: rden NUMERIC "0"
+// Retrieval info: PRIVATE: rden NUMERIC "1"
 // Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
 // Retrieval info: CONSTANT: ADDRESS_ACLR_A STRING "NONE"
 // Retrieval info: CONSTANT: CLOCK_ENABLE_INPUT_A STRING "BYPASS"
 // Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_A STRING "BYPASS"
-// Retrieval info: CONSTANT: INIT_FILE STRING "./binary/bin_1.mif"
+// Retrieval info: CONSTANT: INIT_FILE STRING "../imem/binary/bin_1.mif"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
 // Retrieval info: CONSTANT: LPM_HINT STRING "ENABLE_RUNTIME_MOD=NO"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
@@ -149,13 +152,15 @@ endmodule
 // Retrieval info: USED_PORT: address 0 0 10 0 INPUT NODEFVAL "address[9..0]"
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT VCC "clock"
 // Retrieval info: USED_PORT: q 0 0 32 0 OUTPUT NODEFVAL "q[31..0]"
+// Retrieval info: USED_PORT: rden 0 0 0 0 INPUT VCC "rden"
 // Retrieval info: CONNECT: @address_a 0 0 10 0 address 0 0 10 0
 // Retrieval info: CONNECT: @clock0 0 0 0 0 clock 0 0 0 0
+// Retrieval info: CONNECT: @rden_a 0 0 0 0 rden 0 0 0 0
 // Retrieval info: CONNECT: q 0 0 32 0 @q_a 0 0 32 0
 // Retrieval info: GEN_FILE: TYPE_NORMAL imem.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL imem.inc TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL imem.cmp TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL imem.bsf TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL imem_inst.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL imem_bb.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL imem.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL imem.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL imem.bsf FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL imem_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL imem_bb.v FALSE
 // Retrieval info: LIB_FILE: altera_mf

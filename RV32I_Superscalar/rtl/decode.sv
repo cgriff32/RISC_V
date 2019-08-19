@@ -1,162 +1,204 @@
-//TODO: Check forawrding for branch comp
+//Issue/Decode logic
+//Handle branches
+//Determine which reservation station to send instr to
+//Gen immediates
+
+//TODO: 4-way issue
+
+
 `include "constants.vh"
+`include "struct.v"
 
 module decode(
 	
 	input clk,
+	input rst,
+	input stall_i,
 	
-	//Data pipeline
-	//From IF/ID
-	input[`XLEN-1:0] pc_decode, 
-	input[`XLEN-1:0] instr_decode,
+	input decode_in decode_i,
+	output decode_out decode_o
 	
-	//From MEM/WB
-	input [`XLEN-1:0] mem_wb,
-	input [`XLEN-1:0] instr_wb, 
-	
-	//ID/EXE registers
-	output reg [`REG_DATA_WIDTH-1:0] pc_exe, 
-	output reg [`REG_DATA_WIDTH-1:0] instr_exe,
-	output reg [`REG_DATA_WIDTH-1:0] rs1_data_exe,
-	output reg [`REG_DATA_WIDTH-1:0] rs2_data_exe,
-	output reg [`REG_DATA_WIDTH-1:0] imm_exe,
-	
-	output reg [`REG_ADDR_WIDTH-1:0] rs1_addr_exe,
-	output reg [`REG_ADDR_WIDTH-1:0] rs2_addr_exe,
-	output reg [`REG_ADDR_WIDTH-1:0] rd_addr_exe,
-	
-	//Control signals
-	//Input
-	input [`IMM_SEL_WIDTH-1:0] imm_sel,
-	input reg_write_en,
-	input [`BRANCH_OP_WIDTH-1:0] br_op,
-	
-	input [`FORWARD_SEL_WIDTH-1:0] branch_a_sel,
-	input [`FORWARD_SEL_WIDTH-1:0] branch_b_sel,
-	input [`XLEN-1:0] forward_mem,
-	input [`XLEN-1:0] forward_wb,
-	
-	//Branch control
-	output [`XLEN-1:0] br_decode,
-	output [`XLEN-1:0] jal_decode,
-	output [`XLEN-1:0] jalr_decode,
-	output br_true,
-	input flush_id
 	
 );
 
-wire [`REG_ADDR_WIDTH-1:0] rs1_addr = instr_decode[19:15];
-wire [`REG_ADDR_WIDTH-1:0] rs2_addr = instr_decode[24:20]; 
-wire [`REG_ADDR_WIDTH-1:0] rd_addr = instr_wb[11:7]; 
+decode_internal decode_t;
 
-wire [`XLEN-1:0] rs1_data;
-wire [`XLEN-1:0] rs2_data;
-wire [`XLEN-1:0] rd_data = mem_wb; 
-logic [`XLEN-1:0] imm_wire;
+assign decode_t.rs1_addr = decode_i.instr_instr[19:15];
+assign decode_t.rs2_addr = decode_i.instr_instr[24:20]; 
+assign decode_t.rd_addr = decode_i.instr_instr[11:7]; 
 
-logic [`XLEN-1:0] br_a;
-logic [`XLEN-1:0] br_b;
+assign decode_t.opcode = decode_i.instr_instr[6:0];
+assign decode_t.funct3 = decode_i.instr_instr[14:12];
+assign decode_t.funct7 = decode_i.instr_instr[30];
 
-wire [`XLEN-1:0] imm_jal = {{12{instr_decode[31]}}, instr_decode[19:12], instr_decode[20], instr_decode[30:21], 1'b0 };
-wire [`XLEN-1:0] imm_jalr= {{21{instr_decode[31]}}, instr_decode[30:21], 1'b0 };
-wire [`XLEN-1:0] imm_br = {{20{instr_decode[31]}}, instr_decode[7], instr_decode[30:25], instr_decode[11:8], 1'b0 };
 
-regfile regfile(
-	clk,  
-	rd_addr, 
-	rd_data, 
-	rs1_addr, 
-	rs2_addr, 
-	rs1_data, 
-	rs2_data,
-	reg_write_en
-);
-
-branch_comp branch_comp(
-	br_a,
-	br_b,
-	br_op,
-	br_true
-);
-
-initial
+always_comb
 begin
-	pc_exe <= `XLEN'b0;
-	instr_exe<= `XLEN'b0;
-	rs1_data_exe <= `XLEN'b0;
-	rs2_data_exe <= `XLEN'b0;
-	imm_exe <= `XLEN'b0;
-	rs1_addr_exe <= `XLEN'b0;
-	rs2_addr_exe <= `XLEN'b0;
-	rd_addr_exe <= `XLEN'b0;
+  decode_t.imm_sel = `IMM_SEL_I;
+  decode_t.fu_sel = `FU_SEL_RS;
+  decode_t.alu_op = `ALU_OP_ADD;
+  decode_t.op_sel = `OP_SEL_NONE;
+  decode_t.illegal_instr = 0;
+
+	case(decode_t.opcode)
+
+		`OP_JAL : 
+		begin
+		  decode_t.imm_sel = `IMM_SEL_JAL;
+		  decode_t.fu_sel = `FU_SEL_BRANCH;
+		  decode_t.op_sel = `OP_SEL_JAL;
+		end
+		
+		`OP_JALR : 
+		begin
+		  decode_t.imm_sel = `IMM_SEL_JALR;
+		  decode_t.fu_sel = `FU_SEL_BRANCH;
+		  decode_t.op_sel = `OP_SEL_JALR;
+		end
+		
+		`OP_BRANCH : 
+		begin
+		  decode_t.imm_sel = `IMM_SEL_BR;
+		  decode_t.fu_sel = `FU_SEL_BRANCH;
+		  decode_t.op_sel = `OP_SEL_BRANCH;
+		  case (decode_t.funct3)
+				`FUNCT3_BEQ : decode_t.alu_op = `ALU_OP_SEQ;
+				`FUNCT3_BNE : decode_t.alu_op = `ALU_OP_SNE;
+				`FUNCT3_BLT : decode_t.alu_op = `ALU_OP_SLT;
+				`FUNCT3_BLTU : decode_t.alu_op = `ALU_OP_SLTU;
+				`FUNCT3_BGE : decode_t.alu_op = `ALU_OP_SGE;
+				`FUNCT3_BGEU : decode_t.alu_op = `ALU_OP_SGEU;
+				default : decode_t.illegal_instr = 1'b1;
+			endcase // case (funct3)
+		end
+		
+		`OP_LOAD : 
+		begin
+		  decode_t.imm_sel = `IMM_SEL_I;
+		  decode_t.fu_sel = `FU_SEL_LOAD;
+		  decode_t.op_sel = `OP_SEL_LOAD;
+		end
+		
+		`OP_STORE : 
+		begin
+		  decode_t.imm_sel = `IMM_SEL_S;
+		  decode_t.fu_sel = `FU_SEL_LOAD;
+		  decode_t.op_sel = `OP_SEL_STORE;
+		 end
+		
+		`OP_LUI : 
+		begin
+		  decode_t.imm_sel = `IMM_SEL_U;
+		  decode_t.fu_sel = `FU_SEL_NONE;
+		  decode_t.op_sel = `OP_SEL_LUI;
+		end
+		
+		`OP_AUIPC : 
+		begin
+		  decode_t.imm_sel = `IMM_SEL_U;
+		  decode_t.fu_sel = `FU_SEL_NONE;
+		  decode_t.op_sel = `OP_SEL_AUIPC;
+		end
+		
+		`OP_IMM : 
+		begin
+		  decode_t.imm_sel = `IMM_SEL_I;
+		  decode_t.fu_sel = `FU_SEL_RS;
+		  decode_t.op_sel = `OP_SEL_IMM;
+		  decode_t.alu_op = decode_t.alu_op_wire;
+		end
+		
+		`OP_R : 
+		begin
+		  decode_t.fu_sel = `FU_SEL_RS;
+		  decode_t.op_sel = `OP_SEL_R;
+		  decode_t.alu_op = decode_t.alu_op_wire;
+		end
+		
+		default : decode_t.illegal_instr = 1'b1; //stall
+	endcase
 end
 
 always_comb
 begin
-	
-	case(branch_a_sel)
-		`FORWARD_SEL_EXE : br_a = rs1_data;
-		`FORWARD_SEL_MEM : br_a = forward_mem;
-		`FORWARD_SEL_WB : br_a = forward_wb;
-		default : br_a = rs1_data;
+  	case(decode_t.imm_sel)
+		`IMM_SEL_I : decode_t.imm_wire = {{21{decode_i.instr_instr[31]}}, decode_i.instr_instr[30:20] };
+		`IMM_SEL_S : decode_t.imm_wire = {{21{decode_i.instr_instr[31]}}, decode_i.instr_instr[30:25], decode_i.instr_instr[11:7] };
+		`IMM_SEL_B : decode_t.imm_wire = {{20{decode_i.instr_instr[31]}}, decode_i.instr_instr[7], decode_i.instr_instr[30:25], decode_i.instr_instr[11:8], 1'b0};
+		`IMM_SEL_J : decode_t.imm_wire = {{12{decode_i.instr_instr[31]}}, decode_i.instr_instr[19:12], decode_i.instr_instr[20], decode_i.instr_instr[30:21], 1'b0};
+		`IMM_SEL_U : decode_t.imm_wire = {decode_i.instr_instr[31:12], 12'b0 };
+		`IMM_SEL_JAL : decode_t.imm_wire = {{12{decode_i.instr_instr[31]}}, decode_i.instr_instr[19:12], decode_i.instr_instr[20], decode_i.instr_instr[30:21], 1'b0 };
+    `IMM_SEL_JALR : decode_t.imm_wire = {{21{decode_i.instr_instr[31]}}, decode_i.instr_instr[30:21], 1'b0 };
+    `IMM_SEL_BR : decode_t.imm_wire = {{20{decode_i.instr_instr[31]}}, decode_i.instr_instr[7], decode_i.instr_instr[30:25], decode_i.instr_instr[11:8], 1'b0 };
+		default : decode_t.imm_wire = {{21{decode_i.instr_instr[31]}}, decode_i.instr_instr[30:20] };
 	endcase
-	
-	case(branch_b_sel)
-		`FORWARD_SEL_EXE : br_b = rs2_data;
-		`FORWARD_SEL_MEM : br_b = forward_mem;
-		`FORWARD_SEL_WB : br_b = forward_wb;
-		default : br_b = rs2_data;
-	endcase
-	
-	case(imm_sel)
-		`IMM_SEL_I : imm_wire = {{21{instr_decode[31]}}, instr_decode[30:20] };
-		`IMM_SEL_S : imm_wire = {{21{instr_decode[31]}}, instr_decode[30:25], instr_decode[11:7] };
-		`IMM_SEL_B : imm_wire = {{20{instr_decode[31]}}, instr_decode[7], instr_decode[30:25], instr_decode[11:8], 1'b0};
-		`IMM_SEL_J : imm_wire = {{12{instr_decode[31]}}, instr_decode[19:12], instr_decode[20], instr_decode[30:21], 1'b0};
-		`IMM_SEL_U : imm_wire = {instr_decode[31:12], 12'b0 };
-		default : imm_wire = {{21{instr_decode[31]}}, instr_decode[30:20] };
-	endcase
-	
 end
 
-assign jalr_decode= rs1_data + imm_jalr;
-assign jal_decode= pc_decode + imm_jal;
-assign br_decode= pc_decode + imm_br;
+always_comb
+begin
+	case(decode_t.funct3)
+		`FUNCT3_ADD_SUB : decode_t.alu_op_wire = (decode_t.funct7 && (decode_t.opcode == `OP_R)) ? `ALU_OP_SUB : `ALU_OP_ADD;
+		`FUNCT3_SLL : decode_t.alu_op_wire = `ALU_OP_SLL;
+		`FUNCT3_SLT : decode_t.alu_op_wire = `ALU_OP_SLT;
+		`FUNCT3_SLTU : decode_t.alu_op_wire = `ALU_OP_SLTU;
+		`FUNCT3_XOR : decode_t.alu_op_wire = `ALU_OP_XOR;
+		`FUNCT3_SRA_SRL : decode_t.alu_op_wire = (decode_t.funct7) ? `ALU_OP_SRA : `ALU_OP_SRL;
+		`FUNCT3_OR : decode_t.alu_op_wire = `ALU_OP_OR;
+		`FUNCT3_AND : decode_t.alu_op_wire = `ALU_OP_AND;
+		default : decode_t.alu_op_wire = `ALU_OP_ADD;
+	endcase
+end
 
 always_ff @(posedge clk)
 begin
-	
-	if (flush_id)
+  if(!rst)
+  begin
+      decode_o.imm <= '0;
+      decode_o.rs1 <= '0;
+      decode_o.rs2 <= '0;
+      decode_o.rd <= '0;
+      decode_o.alu_op <= '0;
+      decode_o.pc <= '0;
+      decode_o.thread_id <= '0;
+      decode_o.fu_sel <= '0;
+      decode_o.op_sel <= '0;
+      decode_o.issue_stall <= '1;
+  end
+  else
+  begin
+    decode_o.issue_stall <= stall_i;
+    if(!stall_i)
     begin
-		
-		pc_exe <= '0;
-		instr_exe <= '0;
-		imm_exe <= '0;
-		
-		rs1_data_exe <= '0;
-		rs2_data_exe <= '0;
-		
-		rs1_addr_exe <= '0;
-		rs2_addr_exe <= '0;
-		rd_addr_exe <= '0;
-		
-	end
-	else
-	begin
-		
-		pc_exe <= pc_decode;
-		instr_exe <= instr_decode;
-		imm_exe <= imm_wire;
-		
-		rs1_data_exe <= ((rd_addr == rs1_addr) && reg_write_en) ? rd_data : rs1_data;
-		rs2_data_exe <= ((rd_addr == rs2_addr) && reg_write_en) ? rd_data : rs2_data;
-		
-		rs1_addr_exe <= rs1_addr;
-		rs2_addr_exe <= rs2_addr;
-		rd_addr_exe <= instr_decode[11:7];
-		
-	end
-	
+      if(decode_t.illegal_instr)
+      begin
+        decode_o.imm <= '0;
+        decode_o.rs1 <= '0;
+        decode_o.rs2 <= '0;
+        decode_o.rd <= '0;
+        decode_o.alu_op <= '0;
+        decode_o.pc <= '0;
+        decode_o.thread_id <= '0;
+        decode_o.fu_sel <= '0;
+        decode_o.op_sel <= '0;
+        decode_o.issue_stall = 1;
+      end
+      else
+      begin
+        decode_o.imm <= decode_t.imm_wire;
+        decode_o.rs1 <= decode_t.rs1_addr;
+        decode_o.rs2 <= decode_t.rs2_addr;
+        decode_o.rd <= decode_t.rd_addr;
+        decode_o.alu_op <= decode_t.alu_op;
+        decode_o.pc <= decode_i.instr_pc;
+        decode_o.thread_id <= decode_i.instr_thread_id;
+        decode_o.fu_sel <= decode_t.fu_sel;
+        decode_o.op_sel <= decode_t.op_sel;
+      end
+    end
+ end
 end
+  
+  assign decode_o.issue_ack = |(decode_t.op_sel) && !stall_i;
 
 endmodule
+

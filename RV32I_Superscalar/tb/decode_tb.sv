@@ -2,118 +2,93 @@
 `include "constants.vh"
 
 module decode_tb;
-
+  integer write_data;
+  
 	logic clk;
-
-//Data pipeline
-//From IF/ID
-logic	[`XLEN-1:0] 					pc_decode; 
-logic	[`XLEN-1:0]						instr_decode;
-
-//From MEM/WB
-logic [`XLEN-1:0] 					mem_wb;
-logic [`XLEN-1:0] 					instr_wb; 
-
-//ID/EXE registers
-logic [`REG_DATA_WIDTH-1:0]	pc_exe; 
-logic [`REG_DATA_WIDTH-1:0]	instr_exe;
-logic [`REG_DATA_WIDTH-1:0]	rs1_data_exe;
-logic [`REG_DATA_WIDTH-1:0]	rs2_data_exe;
-logic [`REG_DATA_WIDTH-1:0] imm_exe;
-
-logic [`REG_ADDR_WIDTH-1:0]	rs1_addr_exe;
-logic [`REG_ADDR_WIDTH-1:0]	rs2_addr_exe;
-logic [`REG_ADDR_WIDTH-1:0]	rd_addr_exe;
-
-//Control signals
-//Input
-logic [`IMM_SEL_WIDTH-1:0] 		imm_sel;
-logic 									reg_write_en;
-logic [`ALU_OP_WIDTH-2:0]			br_op;
-
-//Branch control
-logic [`XLEN-1:0] 					br_decode;
-logic [`XLEN-1:0] 					jal_decode;
-logic [`XLEN-1:0] 					jalr_decode;
-logic									     br_true;
+	logic rst;
+	logic stall_i;
 	
+//DECODE
+typedef struct packed
+{
+  logic [`XLEN-1:0] instr_pc;
+  logic [2:0] instr_thread_id;
+  logic [`INSTR_WIDTH-1:0] instr_instr;
+  
+} decode_in;
 
-decode DUT(		.clk(clk),			
-						//Data pipeline			
-						//From IF/ID
-						.pc_decode(pc_decode), 
-						.instr_decode(instr_decode), 
-						//From MEM/WB
-						.mem_wb(mem_wb),
-						.instr_wb(instr_wb),
-						//ID/EXE registers
-						.pc_exe(pc_exe),
-						.instr_exe(instr_exe),
-						.rs1_data_exe(rs1_data_exe),
-						.rs2_data_exe(rs2_data_exe),
-						.imm_exe(imm_exe),						
-						.rs1_addr_exe(rs1_addr_exe),
-						.rs2_addr_exe(rs2_addr_exe),
-						.rd_addr_exe(rd_addr_exe),
-						//Control signals
-						//Input
-						.imm_sel(imm_sel),
-						.reg_write_en(reg_write_en),
-						.br_op(br_op),
-						//Branch control
-						.br_decode(br_decode),
-						.jal_decode(jal_decode),
-						.jalr_decode(jalr_decode),
-						.br_true(br_true)
-						);
+typedef struct packed
+{
+  logic [`REG_ADDR_WIDTH-1:0] rs1_addr;
+  logic [`REG_ADDR_WIDTH-1:0] rs2_addr; 
+  logic [`REG_ADDR_WIDTH-1:0] rd_addr; 
+  
+  logic [`OP_CODE_WIDTH-1:0] opcode;
+  logic [2:0] funct3;
+  logic funct7;
+  
+  logic [`IMM_SEL_WIDTH-1:0] imm_wire;
+  logic [`IMM_SEL_WIDTH-1:0] imm_sel;
+  logic [`FU_SEL_WIDTH-1:0] fu_sel;
+  logic [`ALU_OP_WIDTH-1:0] alu_op_wire;
+  logic [`ALU_OP_WIDTH-1:0] alu_op;
+  logic [`OP_SEL_WIDTH-1:0] op_sel;
+  
+  logic illegal_instr;
+} decode_internal;
+
+typedef struct packed
+{
+  reg [`OP_SEL_WIDTH-1:0] op_sel;
+  reg [`ALU_OP_WIDTH-1:0] alu_op;
+  reg [`REG_ADDR_WIDTH-1:0] rs1;
+  reg [`REG_ADDR_WIDTH-1:0] rs2;
+  reg [`REG_ADDR_WIDTH-1:0] rd;
+  reg [`XLEN-1:0] imm;
+  reg [`XLEN-1:0] pc;
+  reg [2:0] thread_id;
+  reg [`FU_SEL_WIDTH-1:0] fu_sel;
+} decode_out;
+
+decode_in decode_i;
+decode_out decode_o;
+	
+decode DUT(
+	.clk(clk),
+	.stall_i(stall_i),
+	.rst(rst),
+	
+	.decode_i(decode_i),
+	.decode_o(decode_o)
+);
+				
+  //logic [`XLEN-1:0] instr_pc;
+  //logic [2:0] instr_thread_id;
+  //logic [`INSTR_WIDTH-1:0] instr_instr;
+  				
+		
 initial
 begin
+  write_data = $fopen("E:/Thesis/RISCV/RISC_V/tb/output/decode_tb.txt");
   #5
+  decode_i <= 0;
+  rst <= 1;
   
-  pc_decode <= '0;
-  instr_decode <= '0;
-  instr_wb <= '0;
-  //RS1 ADDR
-  instr_decode[19:15] <= 5'b00001;
-  //RS2 ADDR
-  instr_decode[24:20] <= 5'b00000;
-  //RD ADDR
-  instr_wb[11:7] <= 5'b00001;
-  br_op <= '0;
-  mem_wb <= '1;
+  stall_i <= 1;
+  decode_i.instr_instr <= 32'b00000000101101010000011000110011;
   
-  imm_sel <= `IMM_SEL_I;
-  reg_write_en <= '0;
-  #10
-  reg_write_en <= '1;
-  #10
-  reg_write_en <= '0;
-  
-  br_op = `ALU_OP_SEQ;
-    #10;
-	br_op = `ALU_OP_SNE;
-	  #10;
-	br_op = `ALU_OP_SLT;
-	  #10;
-	br_op = `ALU_OP_SLTU;
   #10;
-	br_op = `ALU_OP_SGE;
-	#10;
-	br_op = `ALU_OP_SGEU;
+  rst <= 0;
+  
+  stall_i <= 0;
   #10;
   
   
-  reg_write_en <= '1;
-  #10;
-  reg_write_en <= '0;
-  #10;
-    #10;
-    
   
-  
-  
+$fdisplay(write_data, "%b", decode_o);
+$fclose(write_data);  // close the file   
+$stop;
 end
-
 		
   always 
   begin

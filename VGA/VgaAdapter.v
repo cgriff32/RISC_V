@@ -9,7 +9,6 @@
 /* Color Modes:
  *	Comment the line below to enable color support 
  */
-`define COLOR_MODE 1
 
 module VgaAdapter(
 			resetn,
@@ -28,7 +27,7 @@ module VgaAdapter(
 			VGA_CLK);
 
 	// -- Parameters you can modify
-	parameter COLOR_CHANNEL_DEPTH = 1;
+	localparam COLOR_CHANNEL_DEPTH = 8;
 	/* Color Depth:
 	 *	Specify the number of bits per color channel.
 	 *	For example, a selection of 2 results in 2 bits per channel,
@@ -57,19 +56,15 @@ module VgaAdapter(
 	input resetn;
 	input CLOCK_50;
 
-`ifdef COLOR_MODE // color
-	input [(COLOR_CHANNEL_DEPTH*3-1):0] color;
-`else // black and white
-	input [0:0] color;
-`endif
+	input [8-1:0] color;
 
 	input [7:0] x; //0-159
 	input [6:0] y; //0-119
 	input writeEn;
 	
-	output reg [9:0] VGA_R;
-	output reg [9:0] VGA_G;
-	output reg [9:0] VGA_B;
+	output reg [7:0] VGA_R;
+	output reg [7:0] VGA_G;
+	output reg [7:0] VGA_B;
 	output reg VGA_HS;
 	output reg VGA_VS;
 	output reg VGA_BLANK;
@@ -81,7 +76,7 @@ module VgaAdapter(
 	 * inside the FPGA. The following derived clock, operates at 25MHz, which is
 	 * the frequency required for 640x480@60Hz.
 	 */
-	VgaPll VgaPll(CLOCK_50, VGA_CLK);
+	VgaPll(CLOCK_50, VGA_CLK);
 	
 	//--- CRT Controller (25 mhz)
 	/* These counters are responsible for traversing the onscreen pixels and
@@ -121,21 +116,17 @@ module VgaAdapter(
 	
 	//--- Frame buffer
 	//Dual port RAM read at 25 MHz, written at 50 MHZ (synchronous with rest of circuit)
-	wire [14:0] writeAddr;
-	wire [14:0] readAddr;
+	wire [16:0] writeAddr;
+	wire [16:0] readAddr;
 	
-`ifdef COLOR_MODE // color
-	wire [(COLOR_CHANNEL_DEPTH*3)-1:0] readData;
-`else // black and white
-	wire [0:0] readData;
-`endif
+	wire [(COLOR_CHANNEL_DEPTH)-1:0] readData;
 	
-	assign writeAddr = {y[6:0], x[7:0]};
-	assign readAddr = {yCounter[8:2], xCounter[9:2]};
+	assign writeAddr = (y[6:0]*17'd160) + x[7:0];
+	assign readAddr = (yCounter[8:2]*17'd160) + xCounter[9:2];//{yCounter[8:1], xCounter[9:2]};
 	
 //	FrameBufferRam(color, writeEn, writeAddr, readAddr, CLOCK_50, VGA_CLK, readData);
 
-	altsyncram	frameBufferRam (
+	altsyncram	FBR (
 				.wren_a (writeEn),
 				.clock0 (CLOCK_50), // write clock
 				.clock1 (VGA_CLK), // read clock
@@ -145,61 +136,40 @@ module VgaAdapter(
 				.q_b (readData)	// data out
 				);
 	defparam
-`ifdef COLOR_MODE // color
-		frameBufferRam.width_a = COLOR_CHANNEL_DEPTH*3,
-		frameBufferRam.width_b = COLOR_CHANNEL_DEPTH*3,
-`else // black and white
-		frameBufferRam.width_a = 1,
-		frameBufferRam.width_b = 1,
-`endif
-		frameBufferRam.intended_device_family = "Cyclone II",
-		frameBufferRam.operation_mode = "DUAL_PORT",
-		frameBufferRam.widthad_a = 15,
-		frameBufferRam.widthad_b = 15,
-		frameBufferRam.outdata_reg_b = "CLOCK1",
-		frameBufferRam.address_reg_b = "CLOCK1",
-		frameBufferRam.clock_enable_input_a = "BYPASS",
-		frameBufferRam.clock_enable_input_b = "BYPASS",
-		frameBufferRam.clock_enable_output_b = "BYPASS",
-		frameBufferRam.power_up_uninitialized = "FALSE",
-		frameBufferRam.init_file = BACKGROUND_IMAGE;
+		FBR.width_a = COLOR_CHANNEL_DEPTH,
+		FBR.width_b = COLOR_CHANNEL_DEPTH,
+		FBR.intended_device_family = "Cyclone II",
+		FBR.operation_mode = "DUAL_PORT",
+		FBR.widthad_a = 17,
+		FBR.widthad_b = 17,
+		FBR.outdata_reg_b = "CLOCK1",
+		FBR.address_reg_b = "CLOCK1",
+		FBR.clock_enable_input_a = "BYPASS",
+		FBR.clock_enable_input_b = "BYPASS",
+		FBR.clock_enable_output_b = "BYPASS",
+		FBR.power_up_uninitialized = "FALSE",
+		FBR.init_file = BACKGROUND_IMAGE;
 
-	//--- Output Color
-`ifdef COLOR_MODE // color mode
 	integer index;
 	integer sub_index;
 	
 	always @(readData)
 	begin		
-		VGA_R <= 'b0;
-		VGA_G <= 'b0;
-		VGA_B <= 'b0;
-		for (index = 10-COLOR_CHANNEL_DEPTH; index >= 0; index = index - COLOR_CHANNEL_DEPTH)
+		//VGA_R <= 'b0;
+		//VGA_G <= 'b0;
+		//VGA_B <= 'b0;
+		for (index = 8-COLOR_CHANNEL_DEPTH; index >= 0; index = index - COLOR_CHANNEL_DEPTH)
 		begin
 			for (sub_index = COLOR_CHANNEL_DEPTH - 1; sub_index >= 0; sub_index = sub_index - 1)
 			begin
-				VGA_R[sub_index+index] <= readData[sub_index + COLOR_CHANNEL_DEPTH*2];
-				VGA_G[sub_index+index] <= readData[sub_index + COLOR_CHANNEL_DEPTH];
+				VGA_R[sub_index+index] <= readData[sub_index];// + COLOR_CHANNEL_DEPTH*2];
+				VGA_G[sub_index+index] <= readData[sub_index];// + COLOR_CHANNEL_DEPTH];
 				VGA_B[sub_index+index] <= readData[sub_index];
 			end
 		end	
 	end
-
-
-`else // black and white mode
-	integer index;
 	
-	always @(readData)
-	begin
-		integer index;
-		for (index = 0; index < 10; index = index + 1)
-		begin
-			VGA_R[index] <= readData[0:0];
-			VGA_G[index] <= readData[0:0];
-			VGA_B[index] <= readData[0:0];
-		end	
-	end
-`endif
+
 
 	//--- Output Display Sync and Enable
 	/* The following outputs are delayed by two clock cycles total because
